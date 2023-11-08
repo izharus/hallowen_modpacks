@@ -157,8 +157,8 @@ def generate_json(path_to_modpacks_dir: str, repository_api_url: str):
                 client_data = generate_file_info(
                     os.path.join(root, modpack_name, "client_data"),
                     repository_api_url,
-                    is_install_on_client=False,
-                    is_install_on_server=True,
+                    is_install_on_client=True,
+                    is_install_on_server=False,
                 )
                 server_data = generate_file_info(
                     os.path.join(root, modpack_name, "server_data"),
