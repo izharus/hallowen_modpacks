@@ -106,7 +106,7 @@ def generate_file_info(
                 root_directory,
             )
             download_api_url = urljoin(
-                base_api_url,
+                urljoin(base_api_url, root_directory.replace("\\", "/") + "/"),
                 dist_file_path.replace("\\", "/"),
             )
             map_files.append(
@@ -181,7 +181,9 @@ if __name__ == "__main__":
     except Exception:
         map_json_old = {}
     # pylint: disable = C0301
-    REPOSITORY_API_URL = "https://raw.githubusercontent.com/izharus/hallowen_modpacks/main/modpacks"
+    REPOSITORY_API_URL = (
+        "https://raw.githubusercontent.com/izharus/hallowen_modpacks/main/"
+    )
     PATH_TO_MODPACKS_DIR = "modpacks"
     new_map_json = generate_json(PATH_TO_MODPACKS_DIR, REPOSITORY_API_URL)
 
