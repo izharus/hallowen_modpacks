@@ -30,7 +30,7 @@ import hashlib
 import json
 import os
 import sys
-from typing import List
+from typing import Dict, List
 from urllib.parse import urljoin
 
 
@@ -144,7 +144,7 @@ def generate_json(path_to_modpacks_dir: str, repository_api_url: str):
     """
     # pylint: disable = C0301
 
-    map_json = {}
+    map_json: Dict = {}
     for root, directories, _files in os.walk(path_to_modpacks_dir):
         if root == path_to_modpacks_dir:
             for modpack_name in directories:
@@ -154,23 +154,25 @@ def generate_json(path_to_modpacks_dir: str, repository_api_url: str):
                     is_install_on_client=True,
                     is_install_on_server=True,
                 )
-                client_data = generate_file_info(
-                    os.path.join(root, modpack_name, "client_data"),
-                    repository_api_url,
-                    is_install_on_client=True,
-                    is_install_on_server=False,
-                )
+                map_json[modpack_name] = {}
+                map_json[modpack_name]["main_data"] = main_data
                 server_data = generate_file_info(
                     os.path.join(root, modpack_name, "server_data"),
                     repository_api_url,
                     is_install_on_client=False,
                     is_install_on_server=True,
                 )
-                map_json[modpack_name] = {
-                    "main_data": main_data,
-                    "client_data": client_data,
-                    "server_data": server_data,
-                }
+                map_json[modpack_name]["server_data"] = server_data
+                for dir_name in os.listdir(os.path.join(root, modpack_name)):
+                    if dir_name not in ["main_data", "server_data"]:
+                        client_data = generate_file_info(
+                            os.path.join(root, modpack_name, dir_name),
+                            repository_api_url,
+                            is_install_on_client=True,
+                            is_install_on_server=False,
+                        )
+                        map_json[modpack_name][dir_name] = client_data
+
     return map_json
 
 
