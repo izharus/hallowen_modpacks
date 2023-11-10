@@ -168,5 +168,4 @@ data/ui_inputs_data/
 .vscode/
 prod_venv/
 dev_venv/
-config/
 logs/
