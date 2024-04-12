@@ -4,13 +4,7 @@ import hashlib
 import os
 
 import pytest
-from src.json_maker_hook import (
-    CalculateHashFailed,
-    calculate_hash,
-    generate_file_info,
-    generate_json,
-)
-
+from src import json_maker_hook
 
 def test_incorrect_hash_value_from_calculate_hash(tmpdir):
     """Test if calculate_hash() calculates incorrect hashes"""
@@ -18,7 +12,7 @@ def test_incorrect_hash_value_from_calculate_hash(tmpdir):
     file_path = tmpdir.join("test_file.txt")
     file_path.write(file_content)
 
-    hash_value = calculate_hash(file_path, "sha256")
+    hash_value = json_maker_hook.calculate_hash(file_path, "sha256")
     expected_hash = hashlib.sha256(file_content).hexdigest()
 
     assert hash_value == expected_hash
@@ -28,8 +22,8 @@ def test_calculate_hash_not_raises_error(tmpdir):
     """Test if calculate_hash() handles non-existent files."""
     non_existent_file = tmpdir.join("non_existent_file.txt")
 
-    with pytest.raises(CalculateHashFailed):
-        calculate_hash(non_existent_file, "sha256")
+    with pytest.raises(json_maker_hook.CalculateHashFailed):
+        json_maker_hook.calculate_hash(non_existent_file, "sha256")
 
 
 def test_calculate_hash_uses_invalid_algorithm(tmpdir):
@@ -38,8 +32,8 @@ def test_calculate_hash_uses_invalid_algorithm(tmpdir):
     file_path = tmpdir.join("test_file.txt")
     file_path.write(file_content)
 
-    with pytest.raises(CalculateHashFailed):
-        calculate_hash(file_path, "invalid_algorithm")
+    with pytest.raises(json_maker_hook.CalculateHashFailed):
+        json_maker_hook.calculate_hash(file_path, "invalid_algorithm")
 
 
 def test_generate_file_generates_invalid_data(tmpdir):
@@ -57,7 +51,7 @@ def test_generate_file_generates_invalid_data(tmpdir):
     file2.write("File 2 content")
 
     # Generate file information
-    file_info = generate_file_info(
+    file_info = json_maker_hook.generate_file_info(
         root_directory,
         base_api_url,
         is_install_on_client,
@@ -98,7 +92,7 @@ def test_generate_file_info_should_return_empty_list_for_empty_dir(tmpdir):
     is_install_on_server = False
 
     # Generate file information for an empty directory
-    file_info = generate_file_info(
+    file_info = json_maker_hook.generate_file_info(
         root_directory,
         base_api_url,
         is_install_on_client,
@@ -122,7 +116,7 @@ def test_generate_file_return_invalid_data_for_nested_files(tmpdir):
     is_install_on_server = False
 
     # Generate file information
-    file_info = generate_file_info(
+    file_info = json_maker_hook.generate_file_info(
         root_directory,
         base_api_url,
         is_install_on_client,
@@ -173,8 +167,9 @@ def test_generate_json_missing_fields(tmpdir):
     modpack2.mkdir("client_data").join("file5.txt").write("File 5 content")
     modpack2.mkdir("server_data").join("file6.txt").write("File 6 content")
 
+
     # Execute the generate_json function with the specified JSON file path
-    map_json = generate_json(modpacks_directory, base_api_url)
+    map_json = json_maker_hook.generate_json(modpacks_directory, base_api_url)
     assert map_json
 
     assert len(map_json) == 2  # Two modpacks
@@ -201,7 +196,7 @@ def test_generate_json_returns_non_empty_dato_for_empty_dir(tmpdir):
     base_api_url = "https://example.com/api/"
 
     # Execute the generate_json function with an empty directory
-    map_json = generate_json(str(modpacks_directory), base_api_url)
+    map_json = json_maker_hook.generate_json(str(modpacks_directory), base_api_url)
 
     assert not map_json
 
@@ -213,7 +208,7 @@ def test_generate_json_return_nonempry_dict_for_nonexistent_directory(tmpdir):
     base_api_url = "https://example.com/api/"
 
     # Execute the generate_json function with a non-existent directory
-    map_json = generate_json(non_existent_directory, base_api_url)
+    map_json = json_maker_hook.generate_json(non_existent_directory, base_api_url)
 
     # Verify that the JSON file is generated (it may be empty)
     assert not map_json
@@ -237,7 +232,7 @@ def test_generate_json_return_invalid_fields(tmpdir):
     modpack2.mkdir("server_data").join("file6.txt").write("File 6 content")
 
     # Execute the generate_json function with the specified JSON file path
-    map_json = generate_json(str(modpacks_directory), base_api_url)
+    map_json = json_maker_hook.generate_json(str(modpacks_directory), base_api_url)
 
     assert map_json
 
