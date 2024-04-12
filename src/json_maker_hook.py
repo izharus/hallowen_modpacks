@@ -88,6 +88,8 @@ def generate_file_info(
     Each dictionary contains the following keys:
     - 'file_name': The name of the file.
     - 'api_url': The URL where the file can be downloaded.
+        api_url = base_api_url + relative path (where
+        the root_directory is a base path).
     - 'hash': The hash value of the file.
     - 'install_on_client': True if the file should be installed on
         the client, False otherwise.
@@ -106,7 +108,13 @@ def generate_file_info(
                 root_directory,
             )
             download_api_url = urljoin(
-                urljoin(base_api_url, root_directory.replace("\\", "/") + "/"),
+                urljoin(
+                    base_api_url,
+                    os.path.relpath(
+                        root,
+                        root_directory,
+                    ).replace("\\", "/"),
+                ),
                 dist_file_path.replace("\\", "/"),
             )
             map_files.append(
@@ -143,14 +151,14 @@ def generate_json(path_to_modpacks_dir: str, repository_api_url: str):
         data includes 'main_data', 'client_data', and 'server_data'.
     """
     # pylint: disable = C0301
-
+    modpacks_dir_url = f"{repository_api_url}/{path_to_modpacks_dir}"
     map_json: Dict = {}
     for root, directories, _files in os.walk(path_to_modpacks_dir):
         if root == path_to_modpacks_dir:
             for modpack_name in directories:
                 main_data = generate_file_info(
                     os.path.join(root, modpack_name, "main_data"),
-                    repository_api_url,
+                    f"{modpacks_dir_url}/{modpack_name}/main_data/",
                     is_install_on_client=True,
                     is_install_on_server=True,
                 )
@@ -158,7 +166,7 @@ def generate_json(path_to_modpacks_dir: str, repository_api_url: str):
                 map_json[modpack_name]["main_data"] = main_data
                 server_data = generate_file_info(
                     os.path.join(root, modpack_name, "server_data"),
-                    repository_api_url,
+                    f"{modpacks_dir_url}/{modpack_name}/server_data/",
                     is_install_on_client=False,
                     is_install_on_server=True,
                 )
@@ -167,7 +175,7 @@ def generate_json(path_to_modpacks_dir: str, repository_api_url: str):
                     if dir_name not in ["main_data", "server_data"]:
                         client_data = generate_file_info(
                             os.path.join(root, modpack_name, dir_name),
-                            repository_api_url,
+                            f"{modpacks_dir_url}/{modpack_name}/{dir_name}/",
                             is_install_on_client=True,
                             is_install_on_server=False,
                         )

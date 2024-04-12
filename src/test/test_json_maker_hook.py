@@ -53,7 +53,6 @@ def test_generate_file_generates_invalid_data(tmpdir):
     # Create some test files in the temporary directory
     file1 = root_directory.join("file1.txt")
     file1.write("File 1 content")
-
     file2 = root_directory.mkdir("subdirectory").join("file2.txt")
     file2.write("File 2 content")
 
@@ -107,7 +106,7 @@ def test_generate_file_info_should_return_empty_list_for_empty_dir(tmpdir):
     )
 
     # The result should be an empty list
-    assert file_info is []
+    assert not file_info
 
 
 def test_generate_file_return_invalid_data_for_nested_files(tmpdir):
@@ -204,7 +203,7 @@ def test_generate_json_returns_non_empty_dato_for_empty_dir(tmpdir):
     # Execute the generate_json function with an empty directory
     map_json = generate_json(str(modpacks_directory), base_api_url)
 
-    assert map_json is {}
+    assert not map_json
 
 
 def test_generate_json_return_nonempry_dict_for_nonexistent_directory(tmpdir):
@@ -217,7 +216,7 @@ def test_generate_json_return_nonempry_dict_for_nonexistent_directory(tmpdir):
     map_json = generate_json(non_existent_directory, base_api_url)
 
     # Verify that the JSON file is generated (it may be empty)
-    assert map_json is {}
+    assert not map_json
 
 
 def test_generate_json_return_invalid_fields(tmpdir):
@@ -256,6 +255,3 @@ def test_generate_json_return_invalid_fields(tmpdir):
         for category_info in info.values():
             for file_info in category_info:
                 assert set(file_info.keys()) == expected_file_info_structure
-
-
-# Add more test cases as needed
