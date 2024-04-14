@@ -70,6 +70,7 @@ Each file in the directory should follow a specific JSON format (file_data_dict)
 
 There are four types of keys in the `map.json` file:
 
+- **config**: A dict with config data.
 - **main_data**: A list of files that should have fields "install_on_client" and "install_on_server" set to True.
 
 - **client_data**: A list of files where "install_on_client" is True and "install_on_server" is False.
@@ -77,6 +78,14 @@ There are four types of keys in the `map.json` file:
 - **server_data**: A list of files that are the same as `client_data`, but intended only for server installation.
 
 - **client_additional_data**: A list of numerous additional files for clients, similar to `client_data`. The launcher may add some fields to `client_data` before installing.
+
+**config** structure:
+- **config_name**: The visible name for the current modpack configuration. It should be displayed in the launcher when selecting this configuration.
+- **minecraft_version**: The version of Minecraft, for example: "1.18.2".
+- **forge_version**: The Forge version, for example: "1.18.2-40.2.9".
+- **minecraft_profile**: The name of the Minecraft profile, for example: "1.18.2-forge-40.2.9".
+- **minecraft_server_ip**: The IP address of the Minecraft server.
+- **minecraft_server_port**: The port of the Minecraft server.
 
 ## Usage
 

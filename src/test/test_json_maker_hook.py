@@ -1,10 +1,13 @@
 """Tests for src/json_maker_hook.py"""
 # pylint:disable = E0401, R0123
 import hashlib
+import json
 import os
+from unittest.mock import MagicMock
 
 import pytest
 from src import json_maker_hook
+
 
 def test_incorrect_hash_value_from_calculate_hash(tmpdir):
     """Test if calculate_hash() calculates incorrect hashes"""
@@ -150,7 +153,7 @@ def test_generate_file_return_invalid_data_for_nested_files(tmpdir):
     # Add more test cases as needed
 
 
-def test_generate_json_missing_fields(tmpdir):
+def test_generate_json_missing_fields(tmpdir, mocker):
     """Test the generate_json() function."""
     # Create a temporary directory for testing
     modpacks_directory = tmpdir.mkdir("modpacks")
@@ -167,9 +170,13 @@ def test_generate_json_missing_fields(tmpdir):
     modpack2.mkdir("client_data").join("file5.txt").write("File 5 content")
     modpack2.mkdir("server_data").join("file6.txt").write("File 6 content")
 
-
-    # Execute the generate_json function with the specified JSON file path
-    map_json = json_maker_hook.generate_json(modpacks_directory, base_api_url)
+    with mocker.patch.object(
+        json_maker_hook, "parse_config_dict", MagicMock()
+    ):
+        # Execute the generate_json function with the specified JSON file path
+        map_json = json_maker_hook.generate_json(
+            modpacks_directory, base_api_url
+        )
     assert map_json
 
     assert len(map_json) == 2  # Two modpacks
@@ -196,7 +203,9 @@ def test_generate_json_returns_non_empty_dato_for_empty_dir(tmpdir):
     base_api_url = "https://example.com/api/"
 
     # Execute the generate_json function with an empty directory
-    map_json = json_maker_hook.generate_json(str(modpacks_directory), base_api_url)
+    map_json = json_maker_hook.generate_json(
+        str(modpacks_directory), base_api_url
+    )
 
     assert not map_json
 
@@ -208,13 +217,15 @@ def test_generate_json_return_nonempry_dict_for_nonexistent_directory(tmpdir):
     base_api_url = "https://example.com/api/"
 
     # Execute the generate_json function with a non-existent directory
-    map_json = json_maker_hook.generate_json(non_existent_directory, base_api_url)
+    map_json = json_maker_hook.generate_json(
+        non_existent_directory, base_api_url
+    )
 
     # Verify that the JSON file is generated (it may be empty)
     assert not map_json
 
 
-def test_generate_json_return_invalid_fields(tmpdir):
+def test_generate_json_return_invalid_fields(tmpdir, mocker):
     """Test the file information structure in generate_json()."""
     # Create a temporary directory for testing
     modpacks_directory = tmpdir.mkdir("modpacks")
@@ -231,8 +242,13 @@ def test_generate_json_return_invalid_fields(tmpdir):
     modpack2.mkdir("client_data").join("file5.txt").write("File 5 content")
     modpack2.mkdir("server_data").join("file6.txt").write("File 6 content")
 
-    # Execute the generate_json function with the specified JSON file path
-    map_json = json_maker_hook.generate_json(str(modpacks_directory), base_api_url)
+    with mocker.patch.object(
+        json_maker_hook, "parse_config_dict", MagicMock()
+    ):
+        # Execute the generate_json function with the specified JSON file path
+        map_json = json_maker_hook.generate_json(
+            str(modpacks_directory), base_api_url
+        )
 
     assert map_json
 
@@ -250,3 +266,40 @@ def test_generate_json_return_invalid_fields(tmpdir):
         for category_info in info.values():
             for file_info in category_info:
                 assert set(file_info.keys()) == expected_file_info_structure
+
+
+def test_parse_config_dict_valid_config(tmpdir):
+    """Test parse_config_dict with valid file."""
+    config_file = tmpdir.join("config.json")
+    valid_dict = {
+        "config_name": "terrafirmacraf//t_test",
+        "minecraft_version": "1.18.2",
+        "forge_version": "1.18.2-40.2.9",
+        "minecraft_profile": "1.18.2-forge-40.2.9",
+        "minecraft_server_ip": "77.239.232.50",
+        "minecraft_server_port": "25570",
+    }
+
+    with config_file.open("w") as f:
+        json.dump(valid_dict, f)
+
+    res_dict = json_maker_hook.parse_config_dict(str(config_file))
+    assert valid_dict == res_dict
+
+
+def test_parse_config_dict_invalid_config(tmpdir):
+    """Test parse_config_dict with invalid file."""
+    config_file = tmpdir.join("config.json")
+    valid_dict = {
+        "config_name": 1,  # here should be str name
+        "minecraft_version": "1.18.2",
+        "forge_version": "1.18.2-40.2.9",
+        "minecraft_profile": "1.18.2-forge-40.2.9",
+        "minecraft_server_ip": "77.239.232.50",
+        "minecraft_server_port": "25570",
+    }
+
+    with config_file.open("w") as f:
+        json.dump(valid_dict, f)
+    with pytest.raises(RuntimeError):
+        json_maker_hook.parse_config_dict(str(config_file))

@@ -33,6 +33,30 @@ import sys
 from typing import Dict, List
 from urllib.parse import urljoin
 
+import jsonschema
+
+# Ваш JSON Schema
+SCHEMA = {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+        "config_name": {"type": "string"},
+        "minecraft_version": {"type": "string"},
+        "forge_version": {"type": "string"},
+        "minecraft_profile": {"type": "string"},
+        "minecraft_server_ip": {"type": "string", "format": "ipv4"},
+        "minecraft_server_port": {"type": "string", "pattern": "^\\d{1,5}$"},
+    },
+    "required": [
+        "config_name",
+        "minecraft_version",
+        "forge_version",
+        "minecraft_profile",
+        "minecraft_server_ip",
+        "minecraft_server_port",
+    ],
+}
+
 
 class CalculateHashFailed(RuntimeError):
     """Raises if calculate_hash func raises any exception."""
@@ -60,6 +84,35 @@ def calculate_hash(file_name, hash_algorithm="sha256"):
         return hasher.hexdigest()
     except Exception as error:
         raise CalculateHashFailed() from error
+
+
+def parse_config_dict(config_path: str):
+    """
+    Parse a configuration file located at the specified path.
+
+    Args:
+        config_path (str): The path to the configuration file.
+
+    Returns:
+        dict: A dictionary containing the parsed configuration data.
+
+    Raises:
+        RuntimeError: If there is an error parsing the config file or
+            if the validation fails.
+    """
+    try:
+        with open(config_path, encoding="utf-8") as fr:
+            config_data = json.load(fr)
+    except Exception as error:
+        raise RuntimeError(f"unable to parse config file: {error}") from error
+    # Exception will be raised if json structure incorrect
+    try:
+        jsonschema.validate(instance=config_data, schema=SCHEMA)
+    except jsonschema.exceptions.ValidationError as error:
+        raise RuntimeError(
+            f"validation of config file failed: {error}"
+        ) from error
+    return config_data
 
 
 def generate_file_info(
@@ -156,6 +209,8 @@ def generate_json(path_to_modpacks_dir: str, repository_api_url: str):
     for root, directories, _files in os.walk(path_to_modpacks_dir):
         if root == path_to_modpacks_dir:
             for modpack_name in directories:
+                config_path = os.path.join(root, modpack_name, "config.json")
+
                 main_data = generate_file_info(
                     os.path.join(root, modpack_name, "main_data"),
                     f"{modpacks_dir_url}/{modpack_name}/main_data/",
@@ -163,6 +218,9 @@ def generate_json(path_to_modpacks_dir: str, repository_api_url: str):
                     is_install_on_server=True,
                 )
                 map_json[modpack_name] = {}
+                map_json[modpack_name]["config"] = parse_config_dict(
+                    config_path
+                )
                 map_json[modpack_name]["main_data"] = main_data
                 server_data = generate_file_info(
                     os.path.join(root, modpack_name, "server_data"),
@@ -172,7 +230,7 @@ def generate_json(path_to_modpacks_dir: str, repository_api_url: str):
                 )
                 map_json[modpack_name]["server_data"] = server_data
                 for dir_name in os.listdir(os.path.join(root, modpack_name)):
-                    if dir_name not in ["main_data", "server_data"]:
+                    if dir_name not in ["main_data", "server_data", "config.json"]:
                         client_data = generate_file_info(
                             os.path.join(root, modpack_name, dir_name),
                             f"{modpacks_dir_url}/{modpack_name}/{dir_name}/",

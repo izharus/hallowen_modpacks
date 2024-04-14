@@ -1,3 +1,5 @@
-PyGithub # For downloading files
 pylint
-aiohttp
+pytest-mock
+
+jsonschema
+PyGithub # For downloading files

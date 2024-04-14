@@ -1,0 +1,9 @@
+{
+    "config_name": "terrafirmacraft",
+    "minecraft_version": "1.18.2",
+    "forge_version": "1.18.2-40.2.9",
+    "minecraft_profile": "1.18.2-forge-40.2.9",
+    "minecraft_server_ip": "77.239.232.50",
+    "minecraft_server_port": "25565"
+  }
+  
