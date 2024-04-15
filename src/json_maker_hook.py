@@ -232,7 +232,7 @@ if __name__ == "__main__":
         map_json_old = {}
     # pylint: disable = C0301
     REPOSITORY_API_URL = (
-        "https://raw.githubusercontent.com/izharus/hallowen_modpacks/main/"
+        "https://raw.githubusercontent.com/izharus/hallowen_modpacks/dev/"
     )
     PATH_TO_MODPACKS_DIR = "modpacks"
     new_map_json = generate_json(PATH_TO_MODPACKS_DIR, REPOSITORY_API_URL)
