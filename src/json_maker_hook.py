@@ -7,24 +7,6 @@ modpacks, collecting information about different modpacks, including
 This script calculates the hash of files, generates information about files
 in a directory, and creates a JSON representation of modpack data for
 a Minecraft repository.
-
-## Exceptions
-- CalculateHashFailed: Raised if the calculate_hash function raises
-    any exception.
-
-## Functions
-- calculate_hash(file_name, hash_algorithm="sha256"): Calculate the hash of a
-    file using the specified hash algorithm.
-- generate_file_info(...): Generate information about files in a directory.
-- generate_json(...): Generate a JSON representation of modpack data.
-
-If you plan to create additional modpacks, you can organize them in their
-respective server folders and configure the `map.json` files accordingly.
-This script provides flexibility for managing and distributing various
-Minecraft modpacks with ease.
-
-__Author__: [Your Name]
-__License__: [License Name]
 """
 import hashlib
 import json
