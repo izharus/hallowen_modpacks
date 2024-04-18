@@ -89,6 +89,7 @@ def test_generate_file_generates_invalid_data(tmpdir):
             file_info[0]["api_url"]
             == "https://example.com/api/test_modpacks/file1.txt"
         )
+        assert file_info[0]["yan_obj_storage"] == "test_modpacks/file1.txt"
         assert file_info[0]["install_on_client"] is True
         assert file_info[0]["install_on_server"] is False
         assert "hash" in file_info[0]
@@ -99,6 +100,10 @@ def test_generate_file_generates_invalid_data(tmpdir):
         assert (
             file_info[1]["api_url"]
             == "https://example.com/api/test_modpacks/subdirectory/file2.txt"
+        )
+        assert (
+            file_info[1]["yan_obj_storage"]
+            == "test_modpacks/subdirectory/file2.txt"
         )
         assert file_info[1]["install_on_client"] is True
         assert file_info[1]["install_on_server"] is False
@@ -170,6 +175,7 @@ def test_generate_file_return_invalid_data_for_nested_files(tmpdir):
             file_info[0]["api_url"]
             == "https://example.com/api/test_modpacks/file1.txt"
         )
+        assert file_info[0]["yan_obj_storage"] == "test_modpacks/file1.txt"
         assert file_info[0]["install_on_client"] is True
         assert file_info[0]["install_on_server"] is False
         assert "hash" in file_info[0]
@@ -181,6 +187,10 @@ def test_generate_file_return_invalid_data_for_nested_files(tmpdir):
         assert (
             file_info[1]["api_url"]
             == "https://example.com/api/test_modpacks/subdirectory/file2.txt"
+        )
+        assert (
+            file_info[1]["yan_obj_storage"]
+            == "test_modpacks/subdirectory/file2.txt"
         )
         assert file_info[1]["install_on_client"] is True
         assert file_info[1]["install_on_server"] is False
@@ -304,6 +314,7 @@ def test_generate_json_return_invalid_fields(tmpdir, mocker):
         expected_file_info_structure = {
             "file_name",
             "api_url",
+            "yan_obj_storage",
             "hash",
             "install_on_client",
             "install_on_server",

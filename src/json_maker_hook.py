@@ -184,6 +184,7 @@ def generate_file_info(
                 {
                     "file_name": file_name,
                     "api_url": download_api_url,
+                    "yan_obj_storage": relative_file_path.replace("\\", "/"),
                     "hash": calculate_hash(relative_file_path),
                     "install_on_client": is_install_on_client,
                     "install_on_server": is_install_on_server,

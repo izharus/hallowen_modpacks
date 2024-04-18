@@ -59,7 +59,8 @@ Each file in the directory should follow a specific JSON format (file_data_dict)
 ```json
 {
   "file_name": "file_name",
-  "api_url": "mods/file_name", # used for downloading
+  "api_url": "https://raw.githubusercontent.com/...", # used for downloading file/
+  "yan_obj_storage": "key/to/file/file.ext", # object key to the file in yan obj storage
   "hash": "hash_value", # hash of the file
   "install_on_client": false, # true if it needs to be installed on the client
   "install_on_server": true, # true if it needs to be installed on the server
