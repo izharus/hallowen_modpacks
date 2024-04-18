@@ -84,8 +84,11 @@ def test_generate_file_generates_invalid_data(tmpdir):
 
         # File 1
         assert file_info[0]["file_name"] == "file1.txt"
-        #pylint: disable=C0301
-        assert file_info[0]["api_url"] == "https://example.com/api/test_modpacks/file1.txt"
+        # pylint: disable=C0301
+        assert (
+            file_info[0]["api_url"]
+            == "https://example.com/api/test_modpacks/file1.txt"
+        )
         assert file_info[0]["install_on_client"] is True
         assert file_info[0]["install_on_server"] is False
         assert "hash" in file_info[0]
@@ -163,7 +166,10 @@ def test_generate_file_return_invalid_data_for_nested_files(tmpdir):
         assert file_info[0]["file_name"] == "file1.txt"
         assert file_info[0]["dist_file_path"] == "file1.txt"
         # pylint: disable=C0301
-        assert file_info[0]["api_url"] == "https://example.com/api/test_modpacks/file1.txt"
+        assert (
+            file_info[0]["api_url"]
+            == "https://example.com/api/test_modpacks/file1.txt"
+        )
         assert file_info[0]["install_on_client"] is True
         assert file_info[0]["install_on_server"] is False
         assert "hash" in file_info[0]
@@ -208,7 +214,8 @@ def test_generate_json_missing_fields(tmpdir, mocker):
             json_maker_hook, "parse_config_dict", MagicMock()
         ):
             os.chdir(tmpdir)
-            # Execute the generate_json function with the specified JSON file path
+            # Execute the generate_json function with
+            # the specified JSON file path
             map_json = json_maker_hook.generate_json(
                 relative_path, base_api_url
             )
@@ -285,7 +292,8 @@ def test_generate_json_return_invalid_fields(tmpdir, mocker):
             json_maker_hook, "parse_config_dict", MagicMock()
         ):
             os.chdir(tmpdir)
-            # Execute the generate_json function with the specified JSON file path
+            # Execute the generate_json function with
+            # the specified JSON file path
             map_json = json_maker_hook.generate_json(
                 relative_path, base_api_url
             )
@@ -305,7 +313,10 @@ def test_generate_json_return_invalid_fields(tmpdir, mocker):
         for _modpack, info in map_json.items():
             for category_info in info.values():
                 for file_info in category_info:
-                    assert set(file_info.keys()) == expected_file_info_structure
+                    # pylint: disable=C0301
+                    assert (
+                        set(file_info.keys()) == expected_file_info_structure
+                    )
     finally:
         os.chdir(original_path)
 
@@ -370,6 +381,7 @@ def test_create_github_api_url_with_windows_path():
     """
     base_api_url = "https://api.github.com/repos/username/repository"
     path_to_file_in_repo = "folder\\subfolder\\file.txt"
+    # pylint: disable=C0301
     expected_url = "https://api.github.com/repos/username/repository/folder/subfolder/file.txt"
     assert (
         json_maker_hook.create_github_api_url(
