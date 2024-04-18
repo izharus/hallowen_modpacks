@@ -195,7 +195,7 @@ def generate_file_info(
     return map_files
 
 
-def generate_json(path_to_modpacks_dir: str, repository_api_url: str):
+def generate_json(relative_path: str, repository_api_url: str):
     """
     Generate a JSON representation of modpack data.
 
@@ -205,8 +205,8 @@ def generate_json(path_to_modpacks_dir: str, repository_api_url: str):
     returned as a Python dictionary.
 
     Parameters:
-        path_to_modpacks_dir (str): The path to the directory containing
-            modpack data.
+        relative_path (str): The relative path to the directory
+            containing modpack data.
         repository_api_url (str): The URL to the repository where modpack
             data is hosted.
 
@@ -216,10 +216,10 @@ def generate_json(path_to_modpacks_dir: str, repository_api_url: str):
         data includes 'main_data', 'client_data', and 'server_data'.
     """
     # pylint: disable = C0301
-    modpacks_dir_url = f"{repository_api_url}/{path_to_modpacks_dir}"
+    modpacks_dir_url = f"{repository_api_url}/{relative_path}"
     map_json: Dict = {}
-    for root, directories, _files in os.walk(path_to_modpacks_dir):
-        if root == path_to_modpacks_dir:
+    for root, directories, _files in os.walk(relative_path):
+        if root == relative_path:
             for modpack_name in directories:
                 config_path = os.path.join(root, modpack_name, "config.json")
 
@@ -242,7 +242,11 @@ def generate_json(path_to_modpacks_dir: str, repository_api_url: str):
                 )
                 map_json[modpack_name]["server_data"] = server_data
                 for dir_name in os.listdir(os.path.join(root, modpack_name)):
-                    if dir_name not in ["main_data", "server_data", "config.json"]:
+                    if dir_name not in [
+                        "main_data",
+                        "server_data",
+                        "config.json",
+                    ]:
                         client_data = generate_file_info(
                             os.path.join(root, modpack_name, dir_name),
                             f"{modpacks_dir_url}/{modpack_name}/{dir_name}/",
