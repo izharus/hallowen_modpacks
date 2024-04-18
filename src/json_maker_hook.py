@@ -141,7 +141,7 @@ def generate_file_info(
 
     Args:
         root_directory (str): The root directory to search
-            for files.
+            for files. Path should be relative.
         base_api_url (str): The base URL for the API where the files
             can be downloaded.
         is_install_on_client (bool): Whether the files should be installed
@@ -166,27 +166,25 @@ def generate_file_info(
     - 'dist_file_path': The relative path of the file. Into this path
         file should be downloaded.
     """
-
+    if os.path.isabs(root_directory):
+        raise ValueError("Path should be relative")
     map_files = []
     for root, _directories, files in os.walk(root_directory):
         for file_name in files:
-            real_file_path = os.path.join(root, file_name)
+            relative_file_path = os.path.join(root, file_name)
             dist_file_path = os.path.relpath(
                 os.path.join(root, file_name),
                 root_directory,
             )
             download_api_url = create_github_api_url(
                 base_api_url,
-                os.path.relpath(
-                    real_file_path,
-                    root_directory,
-                ),
+                relative_file_path,
             )
             map_files.append(
                 {
                     "file_name": file_name,
                     "api_url": download_api_url,
-                    "hash": calculate_hash(real_file_path),
+                    "hash": calculate_hash(relative_file_path),
                     "install_on_client": is_install_on_client,
                     "install_on_server": is_install_on_server,
                     "dist_file_path": dist_file_path,

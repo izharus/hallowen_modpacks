@@ -39,118 +39,149 @@ def test_calculate_hash_uses_invalid_algorithm(tmpdir):
         json_maker_hook.calculate_hash(file_path, "invalid_algorithm")
 
 
+def test_generate_file_absolute_path(tmpdir):
+    """Test the generate_file_info() with absolute path."""
+
+    abs_path = str(tmpdir)
+    base_api_url = "https://example.com/api/"
+    with pytest.raises(ValueError):
+        json_maker_hook.generate_file_info(
+            abs_path,
+            base_api_url,
+            True,
+            True,
+        )
+
+
 def test_generate_file_generates_invalid_data(tmpdir):
     """Test the generate_file_info() function."""
     # Create a temporary directory for testing
-    root_directory = tmpdir.mkdir("test_modpacks")
-    base_api_url = "https://example.com/api/"
-    is_install_on_client = True
-    is_install_on_server = False
+    relative_path = "test_modpacks"
+    modpacks_directory = tmpdir.mkdir(relative_path)
+    original_path = os.getcwd()
+    try:
+        base_api_url = "https://example.com/api/"
+        is_install_on_client = True
+        is_install_on_server = False
 
-    # Create some test files in the temporary directory
-    file1 = root_directory.join("file1.txt")
-    file1.write("File 1 content")
-    file2 = root_directory.mkdir("subdirectory").join("file2.txt")
-    file2.write("File 2 content")
+        # Create some test files in the temporary directory
+        file1 = modpacks_directory.join("file1.txt")
+        file1.write("File 1 content")
+        file2 = modpacks_directory.mkdir("subdirectory").join("file2.txt")
+        file2.write("File 2 content")
 
-    # Generate file information
-    file_info = json_maker_hook.generate_file_info(
-        root_directory,
-        base_api_url,
-        is_install_on_client,
-        is_install_on_server,
-    )
+        os.chdir(tmpdir)
+        # Generate file information
+        file_info = json_maker_hook.generate_file_info(
+            relative_path,
+            base_api_url,
+            is_install_on_client,
+            is_install_on_server,
+        )
 
-    # Check the generated file information
-    assert len(file_info) == 2
+        # Check the generated file information
+        assert len(file_info) == 2
 
-    # File 1
-    assert file_info[0]["file_name"] == "file1.txt"
-    assert file_info[0]["api_url"] == "https://example.com/api/file1.txt"
-    assert file_info[0]["install_on_client"] is True
-    assert file_info[0]["install_on_server"] is False
-    assert "hash" in file_info[0]
-    assert "dist_file_path" in file_info[0]
+        # File 1
+        assert file_info[0]["file_name"] == "file1.txt"
+        #pylint: disable=C0301
+        assert file_info[0]["api_url"] == "https://example.com/api/test_modpacks/file1.txt"
+        assert file_info[0]["install_on_client"] is True
+        assert file_info[0]["install_on_server"] is False
+        assert "hash" in file_info[0]
+        assert "dist_file_path" in file_info[0]
 
-    # File 2
-    assert file_info[1]["file_name"] == "file2.txt"
-    assert (
-        file_info[1]["api_url"]
-        == "https://example.com/api/subdirectory/file2.txt"
-    )
-    assert file_info[1]["install_on_client"] is True
-    assert file_info[1]["install_on_server"] is False
-    assert "hash" in file_info[1]
-    assert "dist_file_path" in file_info[1]
+        # File 2
+        assert file_info[1]["file_name"] == "file2.txt"
+        assert (
+            file_info[1]["api_url"]
+            == "https://example.com/api/test_modpacks/subdirectory/file2.txt"
+        )
+        assert file_info[1]["install_on_client"] is True
+        assert file_info[1]["install_on_server"] is False
+        assert "hash" in file_info[1]
+        assert "dist_file_path" in file_info[1]
 
-    # Add more test cases as needed
+    finally:
+        os.chdir(original_path)
 
 
 def test_generate_file_info_should_return_empty_list_for_empty_dir(tmpdir):
     """Test generate_file_info() with an empty directory."""
     # Create an empty directory for testing
-    root_directory = tmpdir.mkdir("empty_modpacks")
-    base_api_url = "https://example.com/api/"
-    is_install_on_client = True
-    is_install_on_server = False
+    relative_path = "test_modpacks"
+    tmpdir.mkdir(relative_path)
+    original_path = os.getcwd()
+    try:
+        base_api_url = "https://example.com/api/"
+        is_install_on_client = True
+        is_install_on_server = False
 
-    # Generate file information for an empty directory
-    file_info = json_maker_hook.generate_file_info(
-        root_directory,
-        base_api_url,
-        is_install_on_client,
-        is_install_on_server,
-    )
+        os.chdir(tmpdir)
+        # Generate file information for an empty directory
+        file_info = json_maker_hook.generate_file_info(
+            relative_path,
+            base_api_url,
+            is_install_on_client,
+            is_install_on_server,
+        )
 
-    # The result should be an empty list
-    assert not file_info
+        # The result should be an empty list
+        assert not file_info
+    finally:
+        os.chdir(original_path)
 
 
 def test_generate_file_return_invalid_data_for_nested_files(tmpdir):
     """Test generate_file_info() with subdirectories."""
     # Create a directory structure for testing
-    root_directory = tmpdir.mkdir("test_modpacks")
-    root_directory.join("file1.txt").write("File 1 content")
-    subdirectory = root_directory.mkdir("subdirectory")
-    subdirectory.join("file2.txt").write("File 2 content")
+    relative_path = "test_modpacks"
+    modpacks_directory = tmpdir.mkdir(relative_path)
+    original_path = os.getcwd()
+    try:
+        modpacks_directory.join("file1.txt").write("File 1 content")
+        subdirectory = modpacks_directory.mkdir("subdirectory")
+        subdirectory.join("file2.txt").write("File 2 content")
 
-    base_api_url = "https://example.com/api/"
-    is_install_on_client = True
-    is_install_on_server = False
+        base_api_url = "https://example.com/api/"
+        is_install_on_client = True
+        is_install_on_server = False
 
-    # Generate file information
-    file_info = json_maker_hook.generate_file_info(
-        root_directory,
-        base_api_url,
-        is_install_on_client,
-        is_install_on_server,
-    )
+        os.chdir(tmpdir)
+        # Generate file information
+        file_info = json_maker_hook.generate_file_info(
+            relative_path,
+            base_api_url,
+            is_install_on_client,
+            is_install_on_server,
+        )
 
-    # Check the generated file information
-    assert len(file_info) == 2
+        # Check the generated file information
+        assert len(file_info) == 2
 
-    # Check the file information for file1.txt
-    assert file_info[0]["file_name"] == "file1.txt"
-    assert file_info[0]["dist_file_path"] == "file1.txt"
-    assert file_info[0]["api_url"] == "https://example.com/api/file1.txt"
-    assert file_info[0]["install_on_client"] is True
-    assert file_info[0]["install_on_server"] is False
-    assert "hash" in file_info[0]
-    assert "dist_file_path" in file_info[0]
+        # Check the file information for file1.txt
+        assert file_info[0]["file_name"] == "file1.txt"
+        assert file_info[0]["dist_file_path"] == "file1.txt"
+        # pylint: disable=C0301
+        assert file_info[0]["api_url"] == "https://example.com/api/test_modpacks/file1.txt"
+        assert file_info[0]["install_on_client"] is True
+        assert file_info[0]["install_on_server"] is False
+        assert "hash" in file_info[0]
+        assert "dist_file_path" in file_info[0]
 
-    # Check the file information for file2.txt in the subdirectory
-    assert file_info[1]["file_name"] == "file2.txt"
-    assert file_info[1]["dist_file_path"] == "subdirectory\\file2.txt"
-    assert (
-        file_info[1]["api_url"]
-        == "https://example.com/api/subdirectory/file2.txt"
-    )
-    assert file_info[1]["install_on_client"] is True
-    assert file_info[1]["install_on_server"] is False
-    assert "hash" in file_info[1]
-    assert "dist_file_path" in file_info[1]
-
-    # Add more test cases as needed
+        # Check the file information for file2.txt in the subdirectory
+        assert file_info[1]["file_name"] == "file2.txt"
+        assert file_info[1]["dist_file_path"] == "subdirectory\\file2.txt"
+        assert (
+            file_info[1]["api_url"]
+            == "https://example.com/api/test_modpacks/subdirectory/file2.txt"
+        )
+        assert file_info[1]["install_on_client"] is True
+        assert file_info[1]["install_on_server"] is False
+        assert "hash" in file_info[1]
+        assert "dist_file_path" in file_info[1]
+    finally:
+        os.chdir(original_path)
 
 
 def test_generate_json_missing_fields(tmpdir, mocker):
