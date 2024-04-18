@@ -16,6 +16,7 @@ from typing import Dict, List
 from urllib.parse import urljoin
 
 import jsonschema
+import validators
 
 # Ваш JSON Schema
 SCHEMA = {
@@ -97,6 +98,38 @@ def parse_config_dict(config_path: str):
     return config_data
 
 
+def create_github_api_url(base_api_url: str, path_to_file_in_repo: str) -> str:
+    """
+    Create a GitHub API URL by joining the base API URL with the path
+    to the file in the repository.
+
+    Args:
+        base_api_url (str): The base URL of the GitHub API.
+        path_to_file_in_repo (str): The path to the file within the repository.
+
+    Returns:
+        str: The constructed GitHub API URL.
+
+    Raises:
+        ValueError: If the base_api_url is not a valid URL
+            or if path_to_file_in_repo is empty.
+    """
+    # Validate base API URL
+    if not validators.url(base_api_url):
+        raise ValueError("Invalid base API URL")
+    # Validate path to file in repo
+    if not path_to_file_in_repo:
+        raise ValueError("Path to file in repository could not be empty")
+    # Normalize base API URL by ensuring it ends with a trailing slash
+    base_api_url = base_api_url.rstrip("/") + "/"
+
+    # Replace backslashes with forward slashes in the path
+    normalized_path = path_to_file_in_repo.replace("\\", "/")
+
+    # Construct the complete URL
+    return urljoin(base_api_url, normalized_path)
+
+
 def generate_file_info(
     root_directory: str,
     base_api_url: str,
@@ -142,15 +175,12 @@ def generate_file_info(
                 os.path.join(root, file_name),
                 root_directory,
             )
-            download_api_url = urljoin(
-                urljoin(
-                    base_api_url,
-                    os.path.relpath(
-                        root,
-                        root_directory,
-                    ).replace("\\", "/"),
+            download_api_url = create_github_api_url(
+                base_api_url,
+                os.path.relpath(
+                    real_file_path,
+                    root_directory,
                 ),
-                dist_file_path.replace("\\", "/"),
             )
             map_files.append(
                 {

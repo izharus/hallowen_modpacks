@@ -303,3 +303,85 @@ def test_parse_config_dict_invalid_config(tmpdir):
         json.dump(valid_dict, f)
     with pytest.raises(RuntimeError):
         json_maker_hook.parse_config_dict(str(config_file))
+
+
+def test_create_github_api_url_default_usage():
+    """
+    Test correct creation of URL for base API URL and path
+    to file in repository.
+    """
+    base_api_url = "https://api.github.com/repos/username/repository"
+    path_to_file_in_repo = "folder/subfolder/file.txt"
+    # pylint: disable=C0301
+    expected_url = "https://api.github.com/repos/username/repository/folder/subfolder/file.txt"
+    assert (
+        json_maker_hook.create_github_api_url(
+            base_api_url, path_to_file_in_repo
+        )
+        == expected_url
+    )
+
+
+def test_create_github_api_url_with_windows_path():
+    """
+    Test creation of URL with replacing backslashes with forward slashes.
+    """
+    base_api_url = "https://api.github.com/repos/username/repository"
+    path_to_file_in_repo = "folder\\subfolder\\file.txt"
+    expected_url = "https://api.github.com/repos/username/repository/folder/subfolder/file.txt"
+    assert (
+        json_maker_hook.create_github_api_url(
+            base_api_url, path_to_file_in_repo
+        )
+        == expected_url
+    )
+
+
+def test_create_github_api_url_with_trailing_slash():
+    """
+    Test creation of URL when base API URL ends with "/".
+    """
+    base_api_url = "https://api.github.com/repos/username/repository/"
+    path_to_file_in_repo = "folder/subfolder/file.txt"
+    # pylint: disable=C0301
+    expected_url = "https://api.github.com/repos/username/repository/folder/subfolder/file.txt"
+    assert (
+        json_maker_hook.create_github_api_url(
+            base_api_url, path_to_file_in_repo
+        )
+        == expected_url
+    )
+
+
+def test_create_github_api_url_with_null_base_url():
+    """
+    Test creation of URL when base API URL is null.
+    """
+    base_api_url = "invalid_url"
+    path_to_file_in_repo = "folder/subfolder/file.txt"
+    with pytest.raises(ValueError):
+        json_maker_hook.create_github_api_url(
+            base_api_url, path_to_file_in_repo
+        )
+
+
+def test_create_github_api_url_empty_path():
+    """
+    Test that ValueError is raised when an empty path to file
+    in repository is provided.
+    """
+    # Define a valid base API URL
+    base_api_url = "https://api.github.com/"
+
+    # Define an empty path to file in repo
+    path_to_file_in_repo = ""
+
+    # Check that ValueError is raised with appropriate error message
+    with pytest.raises(ValueError) as exc_info:
+        json_maker_hook.create_github_api_url(
+            base_api_url, path_to_file_in_repo
+        )
+
+    assert (
+        str(exc_info.value) == "Path to file in repository could not be empty"
+    )

@@ -3,3 +3,5 @@ pytest-mock
 
 jsonschema
 PyGithub # For downloading files
+
+validators
