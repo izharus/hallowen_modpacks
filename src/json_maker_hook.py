@@ -255,7 +255,29 @@ def generate_json(relative_path: str, repository_api_url: str):
                         map_json[modpack_name][dir_name] = client_data
 
     return map_json
+def get_all_obj_keys(map_json: Dict) -> Dict:
+    """
+    Get all object keys from the provided map_json.
 
+    Args:
+        map_json (Dict): A dictionary containing information about object keys.
+
+    Returns:
+        Dict: A dictionary containing all object keys.
+
+    Notes:
+        The function returns a dictionary where the keys are 'yan_obj_storage'
+        values and the values are 'hash' values.
+    """
+    res = {}
+    for modpack_name in map_json:
+        for dir_name in map_json[modpack_name]:
+            if dir_name != "config":
+                res.update({
+                    file_info["yan_obj_storage"]: file_info["hash"]
+                    for file_info in map_json[modpack_name][dir_name]
+                })
+    return res
 
 if __name__ == "__main__":
     try:
