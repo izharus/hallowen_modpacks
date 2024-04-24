@@ -20,6 +20,8 @@ import jsonschema
 import validators
 from loguru import logger as log
 
+from .pydantic_models import MapJson, Modpack
+
 log.add(
     "data/logs/file_{time:YYYY-MM}.log",
     rotation="1 month",
@@ -33,7 +35,11 @@ ACCESS_KEY = "YCAJExAnweRt_N7-ZgPopPA71"
 SECRET_KEY = os.environ.get("YANDEX_OBJECT_STORAGE_EDITOR_KEY")
 REGION_NAME = "ru-central1"  # Укажите ваш регион Yandex Object Storage
 BUCKET_NAME = "tfc.halloween"
-
+# pylint: disable = C0301
+REPOSITORY_API_URL = (
+    "https://raw.githubusercontent.com/izharus/hallowen_modpacks/dev/"
+)
+PATH_TO_MODPACKS_DIR = "modpacks"
 
 # Ваш JSON Schema
 SCHEMA = {
@@ -375,14 +381,14 @@ if __name__ == "__main__":
             map_json_old = json.load(fr)
     except Exception:
         map_json_old = {}
-    # pylint: disable = C0301
-    REPOSITORY_API_URL = (
-        "https://raw.githubusercontent.com/izharus/hallowen_modpacks/dev/"
-    )
-    PATH_TO_MODPACKS_DIR = "modpacks"
+    if map_json_old:
+        # validate map
+        Modpack(**map_json_old["terrafirmacraft"])
+        MapJson(modpacks=map_json_old)
 
     new_map_json = generate_json(PATH_TO_MODPACKS_DIR, REPOSITORY_API_URL)
-
+    # validate map
+    MapJson(modpacks=new_map_json)
     s3 = boto3.client(
         "s3",
         endpoint_url="https://storage.yandexcloud.net",

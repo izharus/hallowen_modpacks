@@ -88,24 +88,22 @@ This file represents a json dictionary (config_json):
 ## `map.json` example:
 ```json
 {
-  "modpacks": {
-    "terrafirmacraft": {
-      "config": {}, // An instance of config.json for current modpack.
-      "main_data": [], // A list of file_info objects for current directory".
-      "server_data": [], // A list of file_info objects for current directory".
-      "client_data": [], // A list of file_info objects for current directory".
-      "client_additional_data": {
-        "shaders": [], // A list of file_info objects for current directory".
-        "fancy_interface": [], // A list of file_info objects for current directory".
-      }
-    },
-    "skyblock": {
-      "config": {}, // An instance of config.json for current modpack.
-      "main_data": [], // A list of file_info objects for current directory".
-      "server_data": [], // A list of file_info objects for current directory".
-      "client_data": [], // A list of file_info objects for current directory".
-      "client_additional_data": {} // Empty for current server.
+  "terrafirmacraft": {
+    "config": {}, // An instance of config.json for current modpack.
+    "main_data": [], // A list of file_info objects for current directory".
+    "server_data": [], // A list of file_info objects for current directory".
+    "client_data": [], // A list of file_info objects for current directory".
+    "client_additional_data": {
+      "shaders": [], // A list of file_info objects for current directory".
+      "fancy_interface": [], // A list of file_info objects for current directory".
     }
+  },
+  "skyblock": {
+    "config": {}, // An instance of config.json for current modpack.
+    "main_data": [], // A list of file_info objects for current directory".
+    "server_data": [], // A list of file_info objects for current directory".
+    "client_data": [], // A list of file_info objects for current directory".
+    "client_additional_data": {} // Empty for current server.
   }
 }
 
