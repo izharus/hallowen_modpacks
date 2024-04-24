@@ -12,11 +12,13 @@ import hashlib
 import json
 import os
 import sys
-from typing import Dict, List
+from typing import Dict, Iterable, List
 from urllib.parse import urljoin
-from loguru import logger as log
+
+import boto3
 import jsonschema
 import validators
+from loguru import logger as log
 
 log.add(
     "data/logs/file_{time:YYYY-MM}.log",
@@ -26,6 +28,11 @@ log.add(
     level="DEBUG",
     serialize=False,
 )
+
+ACCESS_KEY = "YCAJExAnweRt_N7-ZgPopPA71"
+SECRET_KEY = os.environ.get("YANDEX_OBJECT_STORAGE_EDITOR_KEY")
+REGION_NAME = "ru-central1"  # Укажите ваш регион Yandex Object Storage
+BUCKET_NAME = "tfc.halloween"
 
 
 # Ваш JSON Schema
@@ -225,7 +232,6 @@ def generate_json(relative_path: str, repository_api_url: str):
         data includes 'main_data', 'client_data', and 'server_data'.
     """
     # pylint: disable = C0301
-    modpacks_dir_url = f"{repository_api_url}/{relative_path}"
     map_json: Dict = {}
     for root, directories, _files in os.walk(relative_path):
         if root == relative_path:
@@ -234,7 +240,7 @@ def generate_json(relative_path: str, repository_api_url: str):
 
                 main_data = generate_file_info(
                     os.path.join(root, modpack_name, "main_data"),
-                    f"{modpacks_dir_url}/{modpack_name}/main_data/",
+                    repository_api_url,
                     is_install_on_client=True,
                     is_install_on_server=True,
                 )
@@ -245,7 +251,7 @@ def generate_json(relative_path: str, repository_api_url: str):
                 map_json[modpack_name]["main_data"] = main_data
                 server_data = generate_file_info(
                     os.path.join(root, modpack_name, "server_data"),
-                    f"{modpacks_dir_url}/{modpack_name}/server_data/",
+                    repository_api_url,
                     is_install_on_client=False,
                     is_install_on_server=True,
                 )
@@ -258,13 +264,15 @@ def generate_json(relative_path: str, repository_api_url: str):
                     ]:
                         client_data = generate_file_info(
                             os.path.join(root, modpack_name, dir_name),
-                            f"{modpacks_dir_url}/{modpack_name}/{dir_name}/",
+                            repository_api_url,
                             is_install_on_client=True,
                             is_install_on_server=False,
                         )
                         map_json[modpack_name][dir_name] = client_data
 
     return map_json
+
+
 def get_all_obj_keys(map_json: Dict) -> Dict:
     """
     Get all object keys from the provided map_json.
@@ -283,11 +291,70 @@ def get_all_obj_keys(map_json: Dict) -> Dict:
     for modpack_name in map_json:
         for dir_name in map_json[modpack_name]:
             if dir_name != "config":
-                res.update({
-                    file_info["yan_obj_storage"]: file_info["hash"]
-                    for file_info in map_json[modpack_name][dir_name]
-                })
+                res.update(
+                    {
+                        file_info["yan_obj_storage"]: file_info["hash"]
+                        for file_info in map_json[modpack_name][dir_name]
+                    }
+                )
     return res
+
+
+def delete_files(
+    boto3_client: boto3.client,
+    bucket_name: str,
+    obj_keys: Iterable[str],
+) -> None:
+    """
+    Delete multiple objects from an S3 bucket.
+
+    Args:
+        boto3_client (boto3.client): Boto3 S3 client.
+        bucket_name (str): Name of the S3 bucket.
+        obj_keys (Iterable[str]): List of object keys (file paths) to delete.
+
+    Raises:
+        botocore.exceptions.ClientError: If any error occurs
+            during object deletion.
+    """
+    for obj_key in obj_keys:
+        log.info(f"Deleting: {obj_key}")
+        boto3_client.delete_object(Bucket=bucket_name, Key=obj_key)
+
+
+def upload_new_files(
+    boto3_client: boto3.client,
+    bucket_name: str,
+    old_object_keys: Dict[str, str],
+    new_object_keys: Dict[str, str],
+):
+    """
+    Upload new or modified files to an S3 bucket.
+
+    Args:
+        boto3_client (boto3.client): Boto3 S3 client.
+        bucket_name (str): Name of the S3 bucket.
+        old_object_keys (Dict[str, str]): Dictionary containing old
+            object keys and hashes.
+        new_object_keys (Dict[str, str]): Dictionary containing new
+            object keys and hashes.
+
+    Raises:
+        IOError: If an I/O error occurs during file operation.
+        botocore.exceptions.ClientError: If an error occurs during file upload.
+            This includes errors such as FileNotFoundError
+            (if the file specified by the object key does not exist),
+            AccessDenied (if access is denied), etc.
+    """
+    for object_key, new_file_hash in new_object_keys.items():
+        old_file_hash = old_object_keys.get(object_key, "None")
+        if old_file_hash != new_file_hash:
+            log.info(
+                f"Uploading: {object_key}, old/new hash: "
+                f"{old_file_hash}/{new_file_hash}"
+            )
+            boto3_client.upload_file(object_key, bucket_name, object_key)
+
 
 if __name__ == "__main__":
     try:
@@ -300,10 +367,31 @@ if __name__ == "__main__":
         "https://raw.githubusercontent.com/izharus/hallowen_modpacks/dev/"
     )
     PATH_TO_MODPACKS_DIR = "modpacks"
+
     new_map_json = generate_json(PATH_TO_MODPACKS_DIR, REPOSITORY_API_URL)
+
+    s3 = boto3.client(
+        "s3",
+        endpoint_url="https://storage.yandexcloud.net",
+        aws_access_key_id=ACCESS_KEY,
+        aws_secret_access_key=SECRET_KEY,
+    )
+    old_object_keys = get_all_obj_keys(map_json_old)
+    new_object_keys = get_all_obj_keys(new_map_json)
+
+    set_old_hashes = set(old_object_keys.keys())
+    set_new_hashes = set(new_object_keys.keys())
+
+    # delete all old files
+    delete_files(s3, BUCKET_NAME, set_old_hashes - set_new_hashes)
+
+    # upload all new files
+    upload_new_files(s3, BUCKET_NAME, old_object_keys, new_object_keys)
 
     if new_map_json != map_json_old:
         with open("map.json", "w", encoding="utf-8") as fw:
             json.dump(new_map_json, fw)
+
         sys.exit(1)
+    s3.upload_file("map.json", BUCKET_NAME, f"{PATH_TO_MODPACKS_DIR}/map.json")
     sys.exit(0)

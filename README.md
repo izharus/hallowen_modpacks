@@ -30,9 +30,11 @@ Follow these steps to get started with the mod pack.
 ### Installation
 1. Clone this repository to your local machine.
 2. Set the base URL of your mod repository in the `json_maker_hook.py` file. Example: `"https://raw.githubusercontent.com/izharus/tfc_halloween_modpack/"`.
-3. Install the required dependencies by running `pip install -r requirements/dev.txt`.
-4. Set up pre-commit hooks to automate the creation and updating of `map.json`. These hooks include linting tools and the `json_maker_hook`, which automatically generates or updates `map.json` when you add new files.
-5. Add new files to the repository and commit your changes. The pre-commit hook will take care of updating `map.json`.
+3. Set your credentials for Yandex Object Storage:  
+ACCESS_KEY, SECRET_KEY, REGION_NAME, BUCKET_NAME
+4. Install the required dependencies by running `pip install -r requirements/dev.txt`.
+5. Set up pre-commit hooks to automate the creation and updating of `map.json`. These hooks include linting tools and the `json_maker_hook`, which automatically generates or updates `map.json` when you add new files.
+6. Add new files to the repository and commit your changes. The pre-commit hook will take care of updating `map.json`.
 
 ## Contents
 The mod pack is organized into the following categories:
