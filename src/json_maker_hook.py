@@ -375,11 +375,12 @@ def upload_new_files(
             boto3_client.upload_file(object_key, bucket_name, object_key)
 
 
-if __name__ == "__main__":
+def main():
+    """Main work."""
     try:
         with open("map.json", encoding="utf-8") as fr:
             map_json_old = json.load(fr)
-    except Exception:
+    except FileNotFoundError:
         map_json_old = {}
     if map_json_old:
         # validate map
@@ -410,7 +411,14 @@ if __name__ == "__main__":
     if new_map_json != map_json_old:
         with open("map.json", "w", encoding="utf-8") as fw:
             json.dump(new_map_json, fw)
-
+        s3.upload_file(
+            "map.json", BUCKET_NAME, f"{PATH_TO_MODPACKS_DIR}/map.json"
+        )
+        log.info("Operation success...")
         sys.exit(1)
-    s3.upload_file("map.json", BUCKET_NAME, f"{PATH_TO_MODPACKS_DIR}/map.json")
+    log.info("No any changes...")
     sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()
