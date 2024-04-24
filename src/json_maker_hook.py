@@ -14,9 +14,19 @@ import os
 import sys
 from typing import Dict, List
 from urllib.parse import urljoin
-
+from loguru import logger as log
 import jsonschema
 import validators
+
+log.add(
+    "data/logs/file_{time:YYYY-MM}.log",
+    rotation="1 month",
+    retention="1 month",  # Retain log files for 1 month after rotation
+    compression="zip",  # Optional: Enable compression for rotated logs
+    level="DEBUG",
+    serialize=False,
+)
+
 
 # Ваш JSON Schema
 SCHEMA = {

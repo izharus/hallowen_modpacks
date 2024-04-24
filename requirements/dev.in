@@ -5,3 +5,5 @@ jsonschema
 PyGithub # For downloading files
 
 validators
+boto3
+loguru
