@@ -89,10 +89,7 @@ def test_generate_file_generates_invalid_data(tmpdir):
             file_info[0]["api_url"]
             == "https://example.com/api/test_modpacks/file1.txt"
         )
-        assert (
-            file_info[0]["yan_obj_storage"]
-            == "test_modpacks/file1.txt"
-        )
+        assert file_info[0]["yan_obj_storage"] == "test_modpacks/file1.txt"
         assert file_info[0]["install_on_client"] is True
         assert file_info[0]["install_on_server"] is False
         assert "hash" in file_info[0]
@@ -178,10 +175,7 @@ def test_generate_file_return_invalid_data_for_nested_files(tmpdir):
             file_info[0]["api_url"]
             == "https://example.com/api/test_modpacks/file1.txt"
         )
-        assert (
-            file_info[0]["yan_obj_storage"]
-            == "test_modpacks/file1.txt"
-        )
+        assert file_info[0]["yan_obj_storage"] == "test_modpacks/file1.txt"
         assert file_info[0]["install_on_client"] is True
         assert file_info[0]["install_on_server"] is False
         assert "hash" in file_info[0]
@@ -220,6 +214,9 @@ def test_generate_json_missing_fields(tmpdir, mocker):
         modpack1.mkdir("main_data").join("file1.txt").write("File 1 content")
         modpack1.mkdir("client_data").join("file2.txt").write("File 2 content")
         modpack1.mkdir("server_data").join("file3.txt").write("File 3 content")
+        modpack1.mkdir("client_additional_data").mkdir("some_content").join(
+            "file3.txt"
+        ).write("File additional content")
 
         modpack2 = modpacks_directory.mkdir("modpack2")
         modpack2.mkdir("main_data").join("file4.txt").write("File 4 content")
@@ -244,7 +241,7 @@ def test_generate_json_missing_fields(tmpdir, mocker):
         assert "main_data" in map_json["modpack1"]
         assert "client_data" in map_json["modpack1"]
         assert "server_data" in map_json["modpack1"]
-
+        assert "some_content" in map_json["modpack1"]["client_additional_data"]
         # Verify modpack2 information
         assert "modpack2" in map_json
         assert "main_data" in map_json["modpack2"]
@@ -457,11 +454,13 @@ def test_create_github_api_url_empty_path():
         str(exc_info.value) == "Path to file in repository could not be empty"
     )
 
+
 def test_get_all_obj_keys_empty_map_json():
     """Test get_all_obj_keys with an empty map_json."""
     map_json = {}
     # pylint: disable=C1803
     assert json_maker_hook.get_all_obj_keys(map_json) == {}
+
 
 def test_get_all_obj_keys_single_modpack_single_dir():
     """Test get_all_obj_keys with a single modpack and a single directory."""
@@ -469,12 +468,16 @@ def test_get_all_obj_keys_single_modpack_single_dir():
         "modpack_1": {
             "dir_1": [
                 {"yan_obj_storage": "obj_key_1", "hash": "hash_value_1"},
-                {"yan_obj_storage": "obj_key_2", "hash": "hash_value_2"}
+                {"yan_obj_storage": "obj_key_2", "hash": "hash_value_2"},
             ]
         }
     }
-    expected_result = {"obj_key_1": "hash_value_1", "obj_key_2": "hash_value_2"}
+    expected_result = {
+        "obj_key_1": "hash_value_1",
+        "obj_key_2": "hash_value_2",
+    }
     assert json_maker_hook.get_all_obj_keys(map_json) == expected_result
+
 
 def test_get_all_obj_keys_multiple_modpacks_multiple_dirs():
     """
@@ -484,22 +487,20 @@ def test_get_all_obj_keys_multiple_modpacks_multiple_dirs():
         "modpack_1": {
             "dir_1": [
                 {"yan_obj_storage": "obj_key_1", "hash": "hash_value_1"},
-                {"yan_obj_storage": "obj_key_2", "hash": "hash_value_2"}
+                {"yan_obj_storage": "obj_key_2", "hash": "hash_value_2"},
             ],
             "dir_2": [
                 {"yan_obj_storage": "obj_key_3", "hash": "hash_value_3"}
-            ]
+            ],
         },
         "modpack_2": {
-            "dir_3": [
-                {"yan_obj_storage": "obj_key_4", "hash": "hash_value_4"}
-            ]
-        }
+            "dir_3": [{"yan_obj_storage": "obj_key_4", "hash": "hash_value_4"}]
+        },
     }
     expected_result = {
         "obj_key_1": "hash_value_1",
         "obj_key_2": "hash_value_2",
         "obj_key_3": "hash_value_3",
-        "obj_key_4": "hash_value_4"
+        "obj_key_4": "hash_value_4",
     }
     assert json_maker_hook.get_all_obj_keys(map_json) == expected_result

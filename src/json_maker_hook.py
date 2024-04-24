@@ -236,7 +236,11 @@ def generate_json(relative_path: str, repository_api_url: str):
     for root, directories, _files in os.walk(relative_path):
         if root == relative_path:
             for modpack_name in directories:
+                map_json[modpack_name] = {}
                 config_path = os.path.join(root, modpack_name, "config.json")
+                map_json[modpack_name]["config"] = parse_config_dict(
+                    config_path
+                )
 
                 main_data = generate_file_info(
                     os.path.join(root, modpack_name, "main_data"),
@@ -244,11 +248,8 @@ def generate_json(relative_path: str, repository_api_url: str):
                     is_install_on_client=True,
                     is_install_on_server=True,
                 )
-                map_json[modpack_name] = {}
-                map_json[modpack_name]["config"] = parse_config_dict(
-                    config_path
-                )
                 map_json[modpack_name]["main_data"] = main_data
+
                 server_data = generate_file_info(
                     os.path.join(root, modpack_name, "server_data"),
                     repository_api_url,
@@ -256,19 +257,31 @@ def generate_json(relative_path: str, repository_api_url: str):
                     is_install_on_server=True,
                 )
                 map_json[modpack_name]["server_data"] = server_data
-                for dir_name in os.listdir(os.path.join(root, modpack_name)):
-                    if dir_name not in [
-                        "main_data",
-                        "server_data",
-                        "config.json",
-                    ]:
-                        client_data = generate_file_info(
-                            os.path.join(root, modpack_name, dir_name),
-                            repository_api_url,
-                            is_install_on_client=True,
-                            is_install_on_server=False,
-                        )
-                        map_json[modpack_name][dir_name] = client_data
+
+                client_data = generate_file_info(
+                    os.path.join(root, modpack_name, "client_data"),
+                    repository_api_url,
+                    is_install_on_client=True,
+                    is_install_on_server=False,
+                )
+                map_json[modpack_name]["client_data"] = client_data
+
+                additional_data_path = os.path.join(
+                    root, modpack_name, "client_additional_data"
+                )
+                os.makedirs(additional_data_path, exist_ok=True)
+                map_json[modpack_name]["client_additional_data"] = {}
+                for dir_name in os.listdir(additional_data_path):
+                    additional_data = generate_file_info(
+                        os.path.join(root, modpack_name, dir_name),
+                        repository_api_url,
+                        is_install_on_client=True,
+                        is_install_on_server=False,
+                    )
+                    if additional_data:
+                        map_json[modpack_name]["client_additional_data"][
+                            dir_name
+                        ] = additional_data
 
     return map_json
 
