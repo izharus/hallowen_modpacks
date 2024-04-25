@@ -28,7 +28,7 @@ class FileInfo(BaseModel):
     dist_file_path: str
 
 
-class ConfigJson(BaseModel):
+class ServerConfig(BaseModel):
     """
     Represents configuration data for installing and executing
     Vanilla Minecraft.
@@ -63,7 +63,7 @@ class Modpack(BaseModel):
             Additional files that can be added if needed.
     """
 
-    config: ConfigJson
+    config: ServerConfig
     main_data: List[FileInfo]
     client_additional_data: Dict[str, List[FileInfo]]
 

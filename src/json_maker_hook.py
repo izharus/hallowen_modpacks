@@ -20,7 +20,7 @@ import jsonschema
 import validators
 from loguru import logger as log
 
-from .pydantic_models import ConfigJson, FileInfo, MapJson, Modpack
+from .pydantic_models import ServerConfig, FileInfo, MapJson, Modpack
 
 log.add(
     "data/logs/file_{time:YYYY-MM}.log",
@@ -92,7 +92,7 @@ def calculate_hash(file_name, hash_algorithm="sha256"):
         raise CalculateHashFailed() from error
 
 
-def parse_config_dict(config_path: str) -> ConfigJson:
+def parse_config_dict(config_path: str) -> ServerConfig:
     """
     Parse a configuration file located at the specified path.
 
@@ -100,7 +100,7 @@ def parse_config_dict(config_path: str) -> ConfigJson:
         config_path (str): The path to the configuration file.
 
     Returns:
-        ConfigJson: A ConfigJson instance containing the parsed
+        ServerConfig: A ServerConfig instance containing the parsed
             configuration data.
 
     Raises:
@@ -119,7 +119,7 @@ def parse_config_dict(config_path: str) -> ConfigJson:
         raise RuntimeError(
             f"validation of config file failed: {error}"
         ) from error
-    return ConfigJson(**config_data)
+    return ServerConfig(**config_data)
 
 
 def create_github_api_url(base_api_url: str, path_to_file_in_repo: str) -> str:

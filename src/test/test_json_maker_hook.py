@@ -7,7 +7,7 @@ from unittest.mock import MagicMock
 
 import pytest
 from src import json_maker_hook
-from src.pydantic_models import ConfigJson, FileInfo, MapJson
+from src.pydantic_models import ServerConfig, FileInfo, MapJson
 
 
 def test_incorrect_hash_value_from_calculate_hash(tmpdir):
@@ -186,7 +186,7 @@ def test_generate_json_success(tmpdir, mocker):
         with mocker.patch.object(
             json_maker_hook,
             "parse_config_dict",
-            return_value=MagicMock(spec=json_maker_hook.ConfigJson),
+            return_value=MagicMock(spec=json_maker_hook.ServerConfig),
         ):
             os.chdir(tmpdir)
             # Execute the generate_json function with
@@ -253,7 +253,7 @@ def test_parse_config_dict_valid_config(tmpdir):
         json.dump(valid_config, f)
 
     res_config = json_maker_hook.parse_config_dict(config_file.strpath)
-    assert ConfigJson(**valid_config) == res_config
+    assert ServerConfig(**valid_config) == res_config
 
 
 def test_parse_config_dict_invalid_config(tmpdir):
@@ -379,7 +379,7 @@ def test_get_all_obj_keys_single_modpack_single_dir():
                     mock_file_info1,
                     mock_file_info2,
                 ],
-                "config": MagicMock(spec=ConfigJson),
+                "config": MagicMock(spec=ServerConfig),
                 "client_additional_data": {},
             }
         }
@@ -408,7 +408,7 @@ def test_get_all_obj_keys_multiple_modpacks_multiple_dirs(mocker):
     mock_file_info4.yan_obj_storage = "obj_key_4"
     mock_file_info4.hash = "hash_value_4"
 
-    mocker.patch.object(json_maker_hook, "ConfigJson", spec=True)
+    mocker.patch.object(json_maker_hook, "ServerConfig", spec=True)
 
     map_json = MapJson(
         modpacks={
@@ -417,7 +417,7 @@ def test_get_all_obj_keys_multiple_modpacks_multiple_dirs(mocker):
                     mock_file_info1,
                     mock_file_info2,
                 ],
-                "config": json_maker_hook.ConfigJson(),
+                "config": json_maker_hook.ServerConfig(),
                 "client_additional_data": {},
             },
             "modpack_2": {
@@ -426,7 +426,7 @@ def test_get_all_obj_keys_multiple_modpacks_multiple_dirs(mocker):
                     "shaders_data": [mock_file_info3],
                     "some_other_additional_data": [mock_file_info4],
                 },
-                "config": json_maker_hook.ConfigJson(),
+                "config": json_maker_hook.ServerConfig(),
             },
         }
     )
