@@ -7,6 +7,7 @@ from unittest.mock import MagicMock
 
 import pytest
 from src import json_maker_hook
+from src.pydantic_models import ConfigJson, FileInfo, MapJson
 
 
 def test_incorrect_hash_value_from_calculate_hash(tmpdir):
@@ -48,12 +49,10 @@ def test_generate_file_absolute_path(tmpdir):
         json_maker_hook.generate_file_info(
             abs_path,
             base_api_url,
-            True,
-            True,
         )
 
 
-def test_generate_file_generates_invalid_data(tmpdir):
+def test_generate_file_generates_two_files(tmpdir):
     """Test the generate_file_info() function."""
     # Create a temporary directory for testing
     relative_path = "test_modpacks"
@@ -61,54 +60,54 @@ def test_generate_file_generates_invalid_data(tmpdir):
     original_path = os.getcwd()
     try:
         base_api_url = "https://example.com/api/"
-        is_install_on_client = True
-        is_install_on_server = False
+        filename1 = "file1.txt"
+        file1_content = b"File 1 content"
 
+        filename2 = "file2.txt"
+        file2_content = b"File 2 content"
+        file2_subdir = "subdirectory"
         # Create some test files in the temporary directory
-        file1 = modpacks_directory.join("file1.txt")
-        file1.write("File 1 content")
-        file2 = modpacks_directory.mkdir("subdirectory").join("file2.txt")
-        file2.write("File 2 content")
+        file1 = modpacks_directory.join(filename1)
+        file1.write(file1_content)
+        file2 = modpacks_directory.mkdir(file2_subdir).join(filename2)
+        file2.write(file2_content)
 
         os.chdir(tmpdir)
         # Generate file information
-        file_info = json_maker_hook.generate_file_info(
+        file_info_list = json_maker_hook.generate_file_info(
             relative_path,
             base_api_url,
-            is_install_on_client,
-            is_install_on_server,
         )
 
-        # Check the generated file information
-        assert len(file_info) == 2
+        assert file_info_list[0].file_name == filename1
+        assert (
+            file_info_list[0].api_url
+            == f"{base_api_url}{relative_path}/{filename1}"
+        )
+        assert (
+            file_info_list[0].yan_obj_storage == f"{relative_path}/{filename1}"
+        )
+        assert (
+            file_info_list[0].hash == hashlib.sha256(file1_content).hexdigest()
+        )
+        assert file_info_list[0].dist_file_path == filename1
 
-        # File 1
-        assert file_info[0]["file_name"] == "file1.txt"
-        # pylint: disable=C0301
+        assert file_info_list[1].file_name == filename2
         assert (
-            file_info[0]["api_url"]
-            == "https://example.com/api/test_modpacks/file1.txt"
-        )
-        assert file_info[0]["yan_obj_storage"] == "test_modpacks/file1.txt"
-        assert file_info[0]["install_on_client"] is True
-        assert file_info[0]["install_on_server"] is False
-        assert "hash" in file_info[0]
-        assert "dist_file_path" in file_info[0]
-
-        # File 2
-        assert file_info[1]["file_name"] == "file2.txt"
-        assert (
-            file_info[1]["api_url"]
-            == "https://example.com/api/test_modpacks/subdirectory/file2.txt"
+            file_info_list[1].api_url
+            == f"{base_api_url}{relative_path}/{file2_subdir}/{filename2}"
         )
         assert (
-            file_info[1]["yan_obj_storage"]
-            == "test_modpacks/subdirectory/file2.txt"
+            file_info_list[1].yan_obj_storage
+            == f"{relative_path}/{file2_subdir}/{filename2}"
         )
-        assert file_info[1]["install_on_client"] is True
-        assert file_info[1]["install_on_server"] is False
-        assert "hash" in file_info[1]
-        assert "dist_file_path" in file_info[1]
+        assert (
+            file_info_list[1].hash == hashlib.sha256(file2_content).hexdigest()
+        )
+        assert file_info_list[1].dist_file_path == os.path.join(
+            file2_subdir,
+            filename2,
+        )
 
     finally:
         os.chdir(original_path)
@@ -122,16 +121,12 @@ def test_generate_file_info_should_return_empty_list_for_empty_dir(tmpdir):
     original_path = os.getcwd()
     try:
         base_api_url = "https://example.com/api/"
-        is_install_on_client = True
-        is_install_on_server = False
 
         os.chdir(tmpdir)
         # Generate file information for an empty directory
         file_info = json_maker_hook.generate_file_info(
             relative_path,
             base_api_url,
-            is_install_on_client,
-            is_install_on_server,
         )
 
         # The result should be an empty list
@@ -140,91 +135,58 @@ def test_generate_file_info_should_return_empty_list_for_empty_dir(tmpdir):
         os.chdir(original_path)
 
 
-def test_generate_file_return_invalid_data_for_nested_files(tmpdir):
-    """Test generate_file_info() with subdirectories."""
-    # Create a directory structure for testing
-    relative_path = "test_modpacks"
-    modpacks_directory = tmpdir.mkdir(relative_path)
-    original_path = os.getcwd()
-    try:
-        modpacks_directory.join("file1.txt").write("File 1 content")
-        subdirectory = modpacks_directory.mkdir("subdirectory")
-        subdirectory.join("file2.txt").write("File 2 content")
-
-        base_api_url = "https://example.com/api/"
-        is_install_on_client = True
-        is_install_on_server = False
-
-        os.chdir(tmpdir)
-        # Generate file information
-        file_info = json_maker_hook.generate_file_info(
-            relative_path,
-            base_api_url,
-            is_install_on_client,
-            is_install_on_server,
-        )
-
-        # Check the generated file information
-        assert len(file_info) == 2
-
-        # Check the file information for file1.txt
-        assert file_info[0]["file_name"] == "file1.txt"
-        assert file_info[0]["dist_file_path"] == "file1.txt"
-        # pylint: disable=C0301
-        assert (
-            file_info[0]["api_url"]
-            == "https://example.com/api/test_modpacks/file1.txt"
-        )
-        assert file_info[0]["yan_obj_storage"] == "test_modpacks/file1.txt"
-        assert file_info[0]["install_on_client"] is True
-        assert file_info[0]["install_on_server"] is False
-        assert "hash" in file_info[0]
-        assert "dist_file_path" in file_info[0]
-
-        # Check the file information for file2.txt in the subdirectory
-        assert file_info[1]["file_name"] == "file2.txt"
-        assert file_info[1]["dist_file_path"] == "subdirectory\\file2.txt"
-        assert (
-            file_info[1]["api_url"]
-            == "https://example.com/api/test_modpacks/subdirectory/file2.txt"
-        )
-        assert (
-            file_info[1]["yan_obj_storage"]
-            == "test_modpacks/subdirectory/file2.txt"
-        )
-        assert file_info[1]["install_on_client"] is True
-        assert file_info[1]["install_on_server"] is False
-        assert "hash" in file_info[1]
-        assert "dist_file_path" in file_info[1]
-    finally:
-        os.chdir(original_path)
-
-
-def test_generate_json_missing_fields(tmpdir, mocker):
+def test_generate_json_success(tmpdir, mocker):
     """Test the generate_json() function."""
     # Create a temporary directory for testing
     relative_path = "test_modpacks"
     modpacks_directory = tmpdir.mkdir(relative_path)
     original_path = os.getcwd()
     try:
+        os.chdir(tmpdir)
         base_api_url = "https://example.com/api/"
 
         # Create subdirectories and files within the "modpacks" directory
-        modpack1 = modpacks_directory.mkdir("modpack1")
+        modpack1_name = "modpack1"
+        modpack1 = modpacks_directory.mkdir(modpack1_name)
         modpack1.mkdir("main_data").join("file1.txt").write("File 1 content")
-        modpack1.mkdir("client_data").join("file2.txt").write("File 2 content")
-        modpack1.mkdir("server_data").join("file3.txt").write("File 3 content")
         modpack1.mkdir("client_additional_data").mkdir("some_content").join(
             "file3.txt"
         ).write("File additional content")
-
-        modpack2 = modpacks_directory.mkdir("modpack2")
+        main_data1 = json_maker_hook.generate_file_info(
+            os.path.join(
+                relative_path,
+                modpack1_name,
+                "main_data",
+            ),
+            base_api_url,
+        )
+        client_additional_data1 = {
+            "some_content": json_maker_hook.generate_file_info(
+                os.path.join(
+                    relative_path,
+                    modpack1_name,
+                    "client_additional_data",
+                    "some_content",
+                ),
+                base_api_url,
+            )
+        }
+        modpack2_name = "modpack2"
+        modpack2 = modpacks_directory.mkdir(modpack2_name)
         modpack2.mkdir("main_data").join("file4.txt").write("File 4 content")
-        modpack2.mkdir("client_data").join("file5.txt").write("File 5 content")
-        modpack2.mkdir("server_data").join("file6.txt").write("File 6 content")
-
+        client_additional_data2 = {}
+        main_data2 = json_maker_hook.generate_file_info(
+            os.path.join(
+                relative_path,
+                modpack2_name,
+                "main_data",
+            ),
+            base_api_url,
+        )
         with mocker.patch.object(
-            json_maker_hook, "parse_config_dict", MagicMock()
+            json_maker_hook,
+            "parse_config_dict",
+            return_value=MagicMock(spec=json_maker_hook.ConfigJson),
         ):
             os.chdir(tmpdir)
             # Execute the generate_json function with
@@ -232,27 +194,24 @@ def test_generate_json_missing_fields(tmpdir, mocker):
             map_json = json_maker_hook.generate_json(
                 relative_path, base_api_url
             )
-        assert map_json
+        assert len(map_json.modpacks) == 2
 
-        assert len(map_json) == 2  # Two modpacks
-
-        # Verify modpack1 information
-        assert "modpack1" in map_json
-        assert "main_data" in map_json["modpack1"]
-        assert "client_data" in map_json["modpack1"]
-        assert "server_data" in map_json["modpack1"]
-        assert "some_content" in map_json["modpack1"]["client_additional_data"]
-        # Verify modpack2 information
-        assert "modpack2" in map_json
-        assert "main_data" in map_json["modpack2"]
-        assert "client_data" in map_json["modpack2"]
-        assert "server_data" in map_json["modpack2"]
-
+        # pylint: disable=C0301
+        assert map_json.modpacks[modpack1_name].main_data == main_data1
+        assert (
+            map_json.modpacks[modpack1_name].client_additional_data
+            == client_additional_data1
+        )
+        assert map_json.modpacks[modpack2_name].main_data == main_data2
+        assert (
+            map_json.modpacks[modpack2_name].client_additional_data
+            == client_additional_data2
+        )
     finally:
         os.chdir(original_path)
 
 
-def test_generate_json_returns_non_empty_dato_for_empty_dir(tmpdir):
+def test_generate_json_returns_non_empty_data_for_empty_dir(tmpdir):
     """Test generate_json() with an empty directory."""
     # Create an empty "modpacks" directory for testing
     modpacks_directory = tmpdir.mkdir("modpacks")
@@ -262,11 +221,10 @@ def test_generate_json_returns_non_empty_dato_for_empty_dir(tmpdir):
     map_json = json_maker_hook.generate_json(
         str(modpacks_directory), base_api_url
     )
+    assert map_json.modpacks == {}
 
-    assert not map_json
 
-
-def test_generate_json_return_nonempry_dict_for_nonexistent_directory(tmpdir):
+def test_generate_json_return_nonexistent_directory(tmpdir):
     """Test generate_json() with a non-existent directory."""
     # Specify a non-existent directory for testing
     non_existent_directory = os.path.join(str(tmpdir), "non_existent_modpacks")
@@ -276,69 +234,13 @@ def test_generate_json_return_nonempry_dict_for_nonexistent_directory(tmpdir):
     map_json = json_maker_hook.generate_json(
         non_existent_directory, base_api_url
     )
-
-    # Verify that the JSON file is generated (it may be empty)
-    assert not map_json
-
-
-def test_generate_json_return_invalid_fields(tmpdir, mocker):
-    """Test the file information structure in generate_json()."""
-    # Create a temporary directory for testing
-    relative_path = "test_modpacks"
-    modpacks_directory = tmpdir.mkdir(relative_path)
-    original_path = os.getcwd()
-    try:
-        base_api_url = "https://example.com/api/"
-
-        # Create subdirectories and files within the "modpacks" directory
-        modpack1 = modpacks_directory.mkdir("modpack1")
-        modpack1.mkdir("main_data").join("file1.txt").write("File 1 content")
-        modpack1.mkdir("client_data").join("file2.txt").write("File 2 content")
-        modpack1.mkdir("server_data").join("file3.txt").write("File 3 content")
-
-        modpack2 = modpacks_directory.mkdir("modpack2")
-        modpack2.mkdir("main_data").join("file4.txt").write("File 4 content")
-        modpack2.mkdir("client_data").join("file5.txt").write("File 5 content")
-        modpack2.mkdir("server_data").join("file6.txt").write("File 6 content")
-
-        with mocker.patch.object(
-            json_maker_hook, "parse_config_dict", MagicMock()
-        ):
-            os.chdir(tmpdir)
-            # Execute the generate_json function with
-            # the specified JSON file path
-            map_json = json_maker_hook.generate_json(
-                relative_path, base_api_url
-            )
-
-        assert map_json
-
-        # Define the expected structure of file information
-        expected_file_info_structure = {
-            "file_name",
-            "api_url",
-            "yan_obj_storage",
-            "hash",
-            "install_on_client",
-            "install_on_server",
-            "dist_file_path",
-        }
-        # Check if the keys in the file_info match the expected structure
-        for _modpack, info in map_json.items():
-            for category_info in info.values():
-                for file_info in category_info:
-                    # pylint: disable=C0301
-                    assert (
-                        set(file_info.keys()) == expected_file_info_structure
-                    )
-    finally:
-        os.chdir(original_path)
+    assert map_json.modpacks == {}
 
 
 def test_parse_config_dict_valid_config(tmpdir):
     """Test parse_config_dict with valid file."""
     config_file = tmpdir.join("config.json")
-    valid_dict = {
+    valid_config = {
         "config_name": "terrafirmacraf//t_test",
         "minecraft_version": "1.18.2",
         "forge_version": "1.18.2-40.2.9",
@@ -348,10 +250,10 @@ def test_parse_config_dict_valid_config(tmpdir):
     }
 
     with config_file.open("w") as f:
-        json.dump(valid_dict, f)
+        json.dump(valid_config, f)
 
-    res_dict = json_maker_hook.parse_config_dict(str(config_file))
-    assert valid_dict == res_dict
+    res_config = json_maker_hook.parse_config_dict(config_file.strpath)
+    assert ConfigJson(**valid_config) == res_config
 
 
 def test_parse_config_dict_invalid_config(tmpdir):
@@ -457,21 +359,31 @@ def test_create_github_api_url_empty_path():
 
 def test_get_all_obj_keys_empty_map_json():
     """Test get_all_obj_keys with an empty map_json."""
-    map_json = {}
+    map_json = MapJson(modpacks={})
     # pylint: disable=C1803
     assert json_maker_hook.get_all_obj_keys(map_json) == {}
 
 
 def test_get_all_obj_keys_single_modpack_single_dir():
     """Test get_all_obj_keys with a single modpack and a single directory."""
-    map_json = {
-        "modpack_1": {
-            "dir_1": [
-                {"yan_obj_storage": "obj_key_1", "hash": "hash_value_1"},
-                {"yan_obj_storage": "obj_key_2", "hash": "hash_value_2"},
-            ]
+    mock_file_info1 = MagicMock(spec=FileInfo)
+    mock_file_info1.yan_obj_storage = "obj_key_1"
+    mock_file_info1.hash = "hash_value_1"
+    mock_file_info2 = MagicMock(spec=FileInfo)
+    mock_file_info2.yan_obj_storage = "obj_key_2"
+    mock_file_info2.hash = "hash_value_2"
+    map_json = MapJson(
+        modpacks={
+            "modpack_1": {
+                "main_data": [
+                    mock_file_info1,
+                    mock_file_info2,
+                ],
+                "config": MagicMock(spec=ConfigJson),
+                "client_additional_data": {},
+            }
         }
-    }
+    )
     expected_result = {
         "obj_key_1": "hash_value_1",
         "obj_key_2": "hash_value_2",
@@ -479,24 +391,46 @@ def test_get_all_obj_keys_single_modpack_single_dir():
     assert json_maker_hook.get_all_obj_keys(map_json) == expected_result
 
 
-def test_get_all_obj_keys_multiple_modpacks_multiple_dirs():
+def test_get_all_obj_keys_multiple_modpacks_multiple_dirs(mocker):
     """
     Test get_all_obj_keys with multiple modpacks and multiple directories.
     """
-    map_json = {
-        "modpack_1": {
-            "dir_1": [
-                {"yan_obj_storage": "obj_key_1", "hash": "hash_value_1"},
-                {"yan_obj_storage": "obj_key_2", "hash": "hash_value_2"},
-            ],
-            "dir_2": [
-                {"yan_obj_storage": "obj_key_3", "hash": "hash_value_3"}
-            ],
-        },
-        "modpack_2": {
-            "dir_3": [{"yan_obj_storage": "obj_key_4", "hash": "hash_value_4"}]
-        },
-    }
+    mock_file_info1 = MagicMock(spec=FileInfo)
+    mock_file_info1.yan_obj_storage = "obj_key_1"
+    mock_file_info1.hash = "hash_value_1"
+    mock_file_info2 = MagicMock(spec=FileInfo)
+    mock_file_info2.yan_obj_storage = "obj_key_2"
+    mock_file_info2.hash = "hash_value_2"
+    mock_file_info3 = MagicMock(spec=FileInfo)
+    mock_file_info3.yan_obj_storage = "obj_key_3"
+    mock_file_info3.hash = "hash_value_3"
+    mock_file_info4 = MagicMock(spec=FileInfo)
+    mock_file_info4.yan_obj_storage = "obj_key_4"
+    mock_file_info4.hash = "hash_value_4"
+
+    mocker.patch.object(json_maker_hook, "ConfigJson", spec=True)
+
+    map_json = MapJson(
+        modpacks={
+            "modpack_1": {
+                "main_data": [
+                    mock_file_info1,
+                    mock_file_info2,
+                ],
+                "config": json_maker_hook.ConfigJson(),
+                "client_additional_data": {},
+            },
+            "modpack_2": {
+                "main_data": [],
+                "client_additional_data": {
+                    "shaders_data": [mock_file_info3],
+                    "some_other_additional_data": [mock_file_info4],
+                },
+                "config": json_maker_hook.ConfigJson(),
+            },
+        }
+    )
+
     expected_result = {
         "obj_key_1": "hash_value_1",
         "obj_key_2": "hash_value_2",

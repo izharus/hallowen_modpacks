@@ -39,20 +39,10 @@ All modpacks store in the "modpacks" directory. Every modpack stores in its own 
   - This files contains a configuration data for installing and executing Vanilla Minecraft.
  
 - **modpack_name/main_data/**
-  - Compatibility: Server and Client
-  - Description: Essential data files for both server and client.
-
-- **modpack_name/server_data/**
-  - Compatibility: Server
-  - Description: Server-specific data for the server side.
-
-- **modpack_name/client_data/**
-  - Compatibility: Client
-  - Description: Data files intended for clients, providing additional customizations for client only.
+  - Essential data files for both server and client.
 
 - **modpack_name/client_additional_data/custom_name**
-  - Compatibility: Client
-  - Description: Additional files that can be added to the client data if needed. It could be multiple "custom_name" dirs.
+  - Additional files that can be added to the client data if needed. It could be multiple "custom_name" dirs.
 
 
 ## JSON File Format
@@ -64,8 +54,6 @@ Every file from "modpack_name" dir represents by the json structure (file_info):
   "api_url": "https://raw.githubusercontent.com/...", // used for downloading file/
   "yan_obj_storage": "key/to/file/file.ext", // object key to the file in yan obj storage
   "hash": "hash_value", // hash of the file
-  "install_on_client": false, // true if it needs to be installed on the client
-  "install_on_server": true, // true if it needs to be installed on the server
   "dist_file_path": "where_to_download_file"
 }
 ```
@@ -91,8 +79,6 @@ This file represents a json dictionary (config_json):
   "terrafirmacraft": {
     "config": {}, // An instance of config.json for current modpack.
     "main_data": [], // A list of file_info objects for current directory".
-    "server_data": [], // A list of file_info objects for current directory".
-    "client_data": [], // A list of file_info objects for current directory".
     "client_additional_data": {
       "shaders": [], // A list of file_info objects for current directory".
       "fancy_interface": [], // A list of file_info objects for current directory".
@@ -101,10 +87,9 @@ This file represents a json dictionary (config_json):
   "skyblock": {
     "config": {}, // An instance of config.json for current modpack.
     "main_data": [], // A list of file_info objects for current directory".
-    "server_data": [], // A list of file_info objects for current directory".
-    "client_data": [], // A list of file_info objects for current directory".
     "client_additional_data": {} // Empty for current server.
   }
 }
+For more information look into pydantic models (src/pydantic_model.py).
 
 ```

@@ -1,5 +1,5 @@
 """A module with Pydantic models."""
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from pydantic import BaseModel
 
@@ -17,10 +17,6 @@ class FileInfo(BaseModel):
         yan_obj_storage (str): The object key to the file in
             Yandex Object Storage.
         hash (str): The hash value of the file.
-        install_on_client (bool): Indicates whether the file
-            needs to be installed on the client.
-        install_on_server (bool): Indicates whether the file needs
-            to be installed on the server.
         dist_file_path (str): The path where the file should
             be downloaded.
     """
@@ -29,8 +25,6 @@ class FileInfo(BaseModel):
     api_url: str
     yan_obj_storage: str
     hash: str
-    install_on_client: bool
-    install_on_server: bool
     dist_file_path: str
 
 
@@ -64,21 +58,14 @@ class Modpack(BaseModel):
     Attributes:
         config (ConfigJson): The configuration data
             for the modpack.
-        main_data (List[FileInfo]): Essential data files
-            for both server and client.
-        server_data (List[FileInfo]): Server-specific data
-            for the server side.
-        client_data (List[FileInfo]): Data files intended for clients,
-            providing additional customizations for client only.
-        client_additional_data (Optional[Dict[str, List[FileInfo]]]):
-            Additional files that can be added to the client data if needed.
+        main_data (List[FileInfo]): Essential data files.
+        client_additional_data [Dict[str, List[FileInfo]]]:
+            Additional files that can be added if needed.
     """
 
     config: ConfigJson
     main_data: List[FileInfo]
-    server_data: List[FileInfo]
-    client_data: List[FileInfo]
-    client_additional_data: Optional[Dict[str, List[FileInfo]]]
+    client_additional_data: Dict[str, List[FileInfo]]
 
 
 class MapJson(BaseModel):

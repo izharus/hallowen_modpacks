@@ -20,7 +20,7 @@ import jsonschema
 import validators
 from loguru import logger as log
 
-from .pydantic_models import MapJson, Modpack
+from .pydantic_models import ConfigJson, FileInfo, MapJson, Modpack
 
 log.add(
     "data/logs/file_{time:YYYY-MM}.log",
@@ -92,7 +92,7 @@ def calculate_hash(file_name, hash_algorithm="sha256"):
         raise CalculateHashFailed() from error
 
 
-def parse_config_dict(config_path: str):
+def parse_config_dict(config_path: str) -> ConfigJson:
     """
     Parse a configuration file located at the specified path.
 
@@ -100,7 +100,8 @@ def parse_config_dict(config_path: str):
         config_path (str): The path to the configuration file.
 
     Returns:
-        dict: A dictionary containing the parsed configuration data.
+        ConfigJson: A ConfigJson instance containing the parsed
+            configuration data.
 
     Raises:
         RuntimeError: If there is an error parsing the config file or
@@ -118,7 +119,7 @@ def parse_config_dict(config_path: str):
         raise RuntimeError(
             f"validation of config file failed: {error}"
         ) from error
-    return config_data
+    return ConfigJson(**config_data)
 
 
 def create_github_api_url(base_api_url: str, path_to_file_in_repo: str) -> str:
@@ -156,9 +157,7 @@ def create_github_api_url(base_api_url: str, path_to_file_in_repo: str) -> str:
 def generate_file_info(
     root_directory: str,
     base_api_url: str,
-    is_install_on_client: bool,
-    is_install_on_server: bool,
-) -> List[dict]:
+) -> List[FileInfo]:
     """
     Generate information about files in a directory.
 
@@ -167,10 +166,6 @@ def generate_file_info(
             for files. Path should be relative.
         base_api_url (str): The base URL for the API where the files
             can be downloaded.
-        is_install_on_client (bool): Whether the files should be installed
-            on the client.
-        is_install_on_server (bool): Whether the files should be installed
-            on the server.
 
     Returns:
         List[dict]: A list of dictionaries containing information about the
@@ -182,10 +177,6 @@ def generate_file_info(
         api_url = base_api_url + relative path (where
         the root_directory is a base path).
     - 'hash': The hash value of the file.
-    - 'install_on_client': True if the file should be installed on
-        the client, False otherwise.
-    - 'install_on_server': True if the file should be installed on
-        the server, False otherwise.
     - 'dist_file_path': The relative path of the file. Into this path
         file should be downloaded.
     """
@@ -204,27 +195,24 @@ def generate_file_info(
                 relative_file_path,
             )
             map_files.append(
-                {
-                    "file_name": file_name,
-                    "api_url": download_api_url,
-                    "yan_obj_storage": relative_file_path.replace("\\", "/"),
-                    "hash": calculate_hash(relative_file_path),
-                    "install_on_client": is_install_on_client,
-                    "install_on_server": is_install_on_server,
-                    "dist_file_path": dist_file_path,
-                }
+                FileInfo(
+                    **{
+                        "file_name": file_name,
+                        "api_url": download_api_url,
+                        "yan_obj_storage": relative_file_path.replace(
+                            "\\", "/"
+                        ),
+                        "hash": calculate_hash(relative_file_path),
+                        "dist_file_path": dist_file_path,
+                    }
+                )
             )
     return map_files
 
 
-def generate_json(relative_path: str, repository_api_url: str):
+def generate_json(relative_path: str, repository_api_url: str) -> MapJson:
     """
-    Generate a JSON representation of modpack data.
-
-    This function walks through the 'modpacks' directory and collects
-    information about different modpacks, including 'main_data',
-    'client_data', and 'server_data'. The collected information is
-    returned as a Python dictionary.
+    Generate a MapJson object representation of modpack data.
 
     Parameters:
         relative_path (str): The relative path to the directory
@@ -233,66 +221,46 @@ def generate_json(relative_path: str, repository_api_url: str):
             data is hosted.
 
     Returns:
-        dict: A dictionary containing information about modpacks, with
-        modpack names as keys and their associated data as values. The
-        data includes 'main_data', 'client_data', and 'server_data'.
+        MapJson: A MapJson instance containing information about modpacks.
     """
     # pylint: disable = C0301
     map_json: Dict = {}
-    for root, directories, _files in os.walk(relative_path):
+    for root, directories, _ in os.walk(relative_path):
         if root == relative_path:
             for modpack_name in directories:
                 map_json[modpack_name] = {}
                 config_path = os.path.join(root, modpack_name, "config.json")
-                map_json[modpack_name]["config"] = parse_config_dict(
-                    config_path
-                )
+                config = parse_config_dict(config_path)
 
                 main_data = generate_file_info(
                     os.path.join(root, modpack_name, "main_data"),
                     repository_api_url,
-                    is_install_on_client=True,
-                    is_install_on_server=True,
                 )
-                map_json[modpack_name]["main_data"] = main_data
-
-                server_data = generate_file_info(
-                    os.path.join(root, modpack_name, "server_data"),
-                    repository_api_url,
-                    is_install_on_client=False,
-                    is_install_on_server=True,
-                )
-                map_json[modpack_name]["server_data"] = server_data
-
-                client_data = generate_file_info(
-                    os.path.join(root, modpack_name, "client_data"),
-                    repository_api_url,
-                    is_install_on_client=True,
-                    is_install_on_server=False,
-                )
-                map_json[modpack_name]["client_data"] = client_data
 
                 additional_data_path = os.path.join(
                     root, modpack_name, "client_additional_data"
                 )
+                client_additional_data = {}
                 os.makedirs(additional_data_path, exist_ok=True)
-                map_json[modpack_name]["client_additional_data"] = {}
                 for dir_name in os.listdir(additional_data_path):
-                    additional_data = generate_file_info(
-                        os.path.join(root, modpack_name, dir_name),
+                    client_additional_data[dir_name] = generate_file_info(
+                        os.path.join(
+                            root,
+                            modpack_name,
+                            "client_additional_data",
+                            dir_name,
+                        ),
                         repository_api_url,
-                        is_install_on_client=True,
-                        is_install_on_server=False,
                     )
-                    if additional_data:
-                        map_json[modpack_name]["client_additional_data"][
-                            dir_name
-                        ] = additional_data
+                map_json[modpack_name] = Modpack(
+                    config=config,
+                    main_data=main_data,
+                    client_additional_data=client_additional_data,
+                )
+    return MapJson(modpacks=map_json)
 
-    return map_json
 
-
-def get_all_obj_keys(map_json: Dict) -> Dict:
+def get_all_obj_keys(map_json: MapJson) -> Dict:
     """
     Get all object keys from the provided map_json.
 
@@ -307,15 +275,20 @@ def get_all_obj_keys(map_json: Dict) -> Dict:
         values and the values are 'hash' values.
     """
     res = {}
-    for modpack_name in map_json:
-        for dir_name in map_json[modpack_name]:
-            if dir_name != "config":
-                res.update(
-                    {
-                        file_info["yan_obj_storage"]: file_info["hash"]
-                        for file_info in map_json[modpack_name][dir_name]
-                    }
-                )
+    for _, modpack_data in map_json.modpacks.items():
+        res.update(
+            {
+                file_info.yan_obj_storage: file_info.hash
+                for file_info in modpack_data.main_data
+            }
+        )
+        for _, additional_data in modpack_data.client_additional_data.items():
+            res.update(
+                {
+                    file_info.yan_obj_storage: file_info.hash
+                    for file_info in additional_data
+                }
+            )
     return res
 
 
@@ -381,23 +354,21 @@ def main():
         with open("map.json", encoding="utf-8") as fr:
             map_json_old = json.load(fr)
     except FileNotFoundError:
-        map_json_old = {}
-    if map_json_old:
-        # validate map
-        Modpack(**map_json_old["terrafirmacraft"])
-        MapJson(modpacks=map_json_old)
+        map_json_old = {"modpacks": {}}
+
+    map_json_old = MapJson(**map_json_old)
 
     new_map_json = generate_json(PATH_TO_MODPACKS_DIR, REPOSITORY_API_URL)
     # validate map
-    MapJson(modpacks=new_map_json)
+    # MapJson(modpacks=new_map_json)
     s3 = boto3.client(
         "s3",
         endpoint_url="https://storage.yandexcloud.net",
         aws_access_key_id=ACCESS_KEY,
         aws_secret_access_key=SECRET_KEY,
     )
-    old_object_keys = get_all_obj_keys(map_json_old)
     new_object_keys = get_all_obj_keys(new_map_json)
+    old_object_keys = get_all_obj_keys(map_json_old)
 
     set_old_hashes = set(old_object_keys.keys())
     set_new_hashes = set(new_object_keys.keys())
@@ -410,7 +381,7 @@ def main():
 
     if new_map_json != map_json_old:
         with open("map.json", "w", encoding="utf-8") as fw:
-            json.dump(new_map_json, fw)
+            json.dump(new_map_json.model_dump(mode="json"), fw)
         s3.upload_file(
             "map.json", BUCKET_NAME, f"{PATH_TO_MODPACKS_DIR}/map.json"
         )
