@@ -1,13 +1,13 @@
 """Tests for src/json_maker_hook.py"""
-# pylint:disable = E0401, R0123
+# pylint:disable = E0401, R0123, C0411
 import hashlib
 import json
 import os
 from unittest.mock import MagicMock
 
+import json_maker_hook
 import pytest
-from src import json_maker_hook
-from src.pydantic_models import ServerConfig, FileInfo, MapJson
+from src.pydantic_models import FileInfo, MapJson, ServerConfig
 
 
 def test_incorrect_hash_value_from_calculate_hash(tmpdir):

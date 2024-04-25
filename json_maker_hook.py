@@ -19,8 +19,7 @@ import boto3
 import jsonschema
 import validators
 from loguru import logger as log
-
-from .pydantic_models import ServerConfig, FileInfo, MapJson, Modpack
+from src.pydantic_models import FileInfo, MapJson, Modpack, ServerConfig
 
 log.add(
     "data/logs/file_{time:YYYY-MM}.log",
@@ -229,7 +228,9 @@ def generate_json(relative_path: str, repository_api_url: str) -> MapJson:
         if root == relative_path:
             for modpack_name in directories:
                 map_json[modpack_name] = {}
-                config_path = os.path.join(root, modpack_name, "server_config.json")
+                config_path = os.path.join(
+                    root, modpack_name, "server_config.json"
+                )
                 server_config = parse_config_dict(config_path)
 
                 main_data = generate_file_info(
