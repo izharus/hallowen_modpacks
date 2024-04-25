@@ -35,7 +35,7 @@ ACCESS_KEY, SECRET_KEY, REGION_NAME, BUCKET_NAME
 ## Contents
 All modpacks store in the "modpacks" directory. Every modpack stores in its own directory (modpack_name).  
 
-- **modpack_name/config.json**
+- **modpack_name/server_config.json**
   - This files contains a configuration data for installing and executing Vanilla Minecraft.
  
 - **modpack_name/main_data/**
@@ -59,8 +59,8 @@ Every file from "modpack_name" dir represents by the json structure (file_info):
 ```
 
 
-## config.json structure:
-This file represents a json dictionary (config_json):
+## server_config.json structure:
+This file represents a json dictionary (server_config):
 ```json
 {
   "config_name" : "TFC Survival", //The visible name for the current modpack configuration. It should be displayed in the launcher when selecting this configuration.
@@ -77,7 +77,7 @@ This file represents a json dictionary (config_json):
 ```json
 {
   "terrafirmacraft": {
-    "config": {}, // An instance of config.json for current modpack.
+    "server_config": {}, // An instance of server_config.json for current modpack.
     "main_data": [], // A list of file_info objects for current directory".
     "client_additional_data": {
       "shaders": [], // A list of file_info objects for current directory".
@@ -85,7 +85,7 @@ This file represents a json dictionary (config_json):
     }
   },
   "skyblock": {
-    "config": {}, // An instance of config.json for current modpack.
+    "server_config": {}, // An instance of server_config.json for current modpack.
     "main_data": [], // A list of file_info objects for current directory".
     "client_additional_data": {} // Empty for current server.
   }
