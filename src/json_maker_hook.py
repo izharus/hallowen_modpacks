@@ -229,8 +229,8 @@ def generate_json(relative_path: str, repository_api_url: str) -> MapJson:
         if root == relative_path:
             for modpack_name in directories:
                 map_json[modpack_name] = {}
-                config_path = os.path.join(root, modpack_name, "config.json")
-                config = parse_config_dict(config_path)
+                config_path = os.path.join(root, modpack_name, "server_config.json")
+                server_config = parse_config_dict(config_path)
 
                 main_data = generate_file_info(
                     os.path.join(root, modpack_name, "main_data"),
@@ -253,7 +253,7 @@ def generate_json(relative_path: str, repository_api_url: str) -> MapJson:
                         repository_api_url,
                     )
                 map_json[modpack_name] = Modpack(
-                    config=config,
+                    server_config=server_config,
                     main_data=main_data,
                     client_additional_data=client_additional_data,
                 )

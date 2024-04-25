@@ -63,7 +63,7 @@ class Modpack(BaseModel):
             Additional files that can be added if needed.
     """
 
-    config: ServerConfig
+    server_config: ServerConfig
     main_data: List[FileInfo]
     client_additional_data: Dict[str, List[FileInfo]]
 

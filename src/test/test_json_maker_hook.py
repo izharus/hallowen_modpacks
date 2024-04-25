@@ -379,7 +379,7 @@ def test_get_all_obj_keys_single_modpack_single_dir():
                     mock_file_info1,
                     mock_file_info2,
                 ],
-                "config": MagicMock(spec=ServerConfig),
+                "server_config": MagicMock(spec=ServerConfig),
                 "client_additional_data": {},
             }
         }
@@ -417,7 +417,7 @@ def test_get_all_obj_keys_multiple_modpacks_multiple_dirs(mocker):
                     mock_file_info1,
                     mock_file_info2,
                 ],
-                "config": json_maker_hook.ServerConfig(),
+                "server_config": json_maker_hook.ServerConfig(),
                 "client_additional_data": {},
             },
             "modpack_2": {
@@ -426,7 +426,7 @@ def test_get_all_obj_keys_multiple_modpacks_multiple_dirs(mocker):
                     "shaders_data": [mock_file_info3],
                     "some_other_additional_data": [mock_file_info4],
                 },
-                "config": json_maker_hook.ServerConfig(),
+                "server_config": json_maker_hook.ServerConfig(),
             },
         }
     )
