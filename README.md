@@ -63,7 +63,7 @@ Every file from "modpack_name" dir represents by the json structure (file_info):
 This file represents a json dictionary (server_config):
 ```json
 {
-  "config_name" : "TFC Survival", //The visible name for the current modpack configuration. It should be displayed in the launcher when selecting this configuration.
+  "display_name" : "TFC Survival", //The visible name for the current modpack configuration. It should be displayed in the launcher when selecting this configuration.
   "minecraft_version": "1.18.2", // The version of Minecraft.
   "forge_version": "1.18.2-40.2.9", // The Forge version.
   "minecraft_profile": "1.18.2-forge-40.2.9", // The name of the Minecraft profile.

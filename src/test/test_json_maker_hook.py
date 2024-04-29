@@ -241,7 +241,7 @@ def test_parse_config_dict_valid_config(tmpdir):
     """Test parse_config_dict with valid file."""
     config_file = tmpdir.join("config.json")
     valid_config = {
-        "config_name": "terrafirmacraf//t_test",
+        "display_name": "terrafirmacraf//t_test",
         "minecraft_version": "1.18.2",
         "forge_version": "1.18.2-40.2.9",
         "minecraft_profile": "1.18.2-forge-40.2.9",
@@ -260,7 +260,7 @@ def test_parse_config_dict_invalid_config(tmpdir):
     """Test parse_config_dict with invalid file."""
     config_file = tmpdir.join("config.json")
     valid_dict = {
-        "config_name": 1,  # here should be str name
+        "display_name": 1,  # here should be str name
         "minecraft_version": "1.18.2",
         "forge_version": "1.18.2-40.2.9",
         "minecraft_profile": "1.18.2-forge-40.2.9",

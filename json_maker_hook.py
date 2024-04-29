@@ -45,7 +45,7 @@ SCHEMA = {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "type": "object",
     "properties": {
-        "config_name": {"type": "string"},
+        "display_name": {"type": "string"},
         "minecraft_version": {"type": "string"},
         "forge_version": {"type": "string"},
         "minecraft_profile": {"type": "string"},
@@ -53,7 +53,7 @@ SCHEMA = {
         "minecraft_server_port": {"type": "string", "pattern": "^\\d{1,5}$"},
     },
     "required": [
-        "config_name",
+        "display_name",
         "minecraft_version",
         "forge_version",
         "minecraft_profile",
