@@ -53,6 +53,6 @@ repos:
     hooks:
     -     id: json_maker_hook
           name: json_maker_hook
-          entry: python src\\json_maker_hook.py
+          entry: python json_maker_hook.py
           language: system
           types: [python]
