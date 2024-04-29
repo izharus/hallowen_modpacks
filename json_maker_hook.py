@@ -36,7 +36,7 @@ REGION_NAME = "ru-central1"  # Укажите ваш регион Yandex Object 
 BUCKET_NAME = "tfc.halloween"
 # pylint: disable = C0301
 REPOSITORY_API_URL = (
-    "https://raw.githubusercontent.com/izharus/hallowen_modpacks/dev/"
+    "https://raw.githubusercontent.com/izharus/hallowen_modpacks/main/"
 )
 PATH_TO_MODPACKS_DIR = "modpacks"
 
