@@ -12,14 +12,16 @@ import hashlib
 import json
 import os
 import sys
-from typing import Dict, Iterable, List
+from typing import Dict, Iterable, List, Optional
 from urllib.parse import urljoin
+from pathlib import Path
 
 import boto3
 import jsonschema
 import validators
 from loguru import logger as log
 from src.pydantic_models import FileInfo, MapJson, Modpack, ServerConfig
+import pydantic
 
 log.add(
     "data/logs/file_{time:YYYY-MM}.log",
@@ -69,6 +71,12 @@ class CalculateHashFailed(RuntimeError):
     def __init__(self, message="Calculate_hash function failed.") -> None:
         super().__init__(message)
 
+class ServerIconNotFound(FileNotFoundError):
+    """Raises if server icon is not exists."""
+
+    def __init__(self, message="") -> None:
+        super().__init__(message)
+
 
 def calculate_hash(file_name, hash_algorithm="sha256"):
     """Calculate the hash of a file using the specified hash algorithm."""
@@ -91,7 +99,11 @@ def calculate_hash(file_name, hash_algorithm="sha256"):
         raise CalculateHashFailed() from error
 
 
-def parse_config_dict(config_path: str) -> ServerConfig:
+def parse_config_dict(
+        config_path: str,
+        modpack_dir: str,
+        repository_api_url: str,
+        ) -> ServerConfig:
     """
     Parse a configuration file located at the specified path.
 
@@ -118,6 +130,17 @@ def parse_config_dict(config_path: str) -> ServerConfig:
         raise RuntimeError(
             f"validation of config file failed: {error}"
         ) from error
+    server_launcher_icon = generate_single_file_info(
+        str(Path(modpack_dir,
+            "client_additional_data",
+            "launcher_data",
+            "server_icon.jpg",
+            )),
+        repository_api_url,
+    )
+    if not server_launcher_icon:
+        raise ServerIconNotFound
+    config_data["server_icon"] = server_launcher_icon
     return ServerConfig(**config_data)
 
 
@@ -152,6 +175,35 @@ def create_github_api_url(base_api_url: str, path_to_file_in_repo: str) -> str:
     # Construct the complete URL
     return urljoin(base_api_url, normalized_path)
 
+def generate_single_file_info(
+    file_path: str,
+    base_api_url: str,
+) -> Optional[FileInfo]:
+    """
+    Generate information for a specific file.
+
+    Args:
+        file_path (str): The path to the specific file.
+        base_api_url (str): The base URL for the API where the file can be downloaded.
+
+    Returns:
+        Optional[FileInfo]: A FileInfo object containing information about the file,
+            or None if the file does not exist or an error occurs.
+    """
+    if not os.path.isfile(file_path):
+        return None
+
+    file_name = os.path.basename(file_path)
+    dist_file_path = file_path
+    download_api_url = create_github_api_url(base_api_url, file_path)
+
+    return FileInfo(
+        file_name=file_name,
+        api_url=download_api_url,
+        yan_obj_storage=file_path.replace("\\", "/"),
+        hash=calculate_hash(file_path),
+        dist_file_path=dist_file_path,
+    )
 
 def generate_file_info(
     root_directory: str,
@@ -231,7 +283,11 @@ def generate_json(relative_path: str, repository_api_url: str) -> MapJson:
                 config_path = os.path.join(
                     root, modpack_name, "server_config.json"
                 )
-                server_config = parse_config_dict(config_path)
+                server_config = parse_config_dict(
+                    config_path,
+                    os.path.join(root, modpack_name),
+                    repository_api_url,
+                    )
 
                 main_data = generate_file_info(
                     os.path.join(root, modpack_name, "main_data"),
@@ -253,6 +309,7 @@ def generate_json(relative_path: str, repository_api_url: str) -> MapJson:
                         ),
                         repository_api_url,
                     )
+
                 map_json[modpack_name] = Modpack(
                     server_config=server_config,
                     main_data=main_data,
@@ -356,8 +413,10 @@ def main():
             map_json_old = json.load(fr)
     except FileNotFoundError:
         map_json_old = {"modpacks": {}}
-
-    map_json_old = MapJson(**map_json_old)
+    try:
+        map_json_old = MapJson(**map_json_old)
+    except pydantic.ValidationError:
+        map_json_old = {"modpacks": {}}
 
     new_map_json = generate_json(PATH_TO_MODPACKS_DIR, REPOSITORY_API_URL)
     # validate map
@@ -369,7 +428,7 @@ def main():
         aws_secret_access_key=SECRET_KEY,
     )
     new_object_keys = get_all_obj_keys(new_map_json)
-    old_object_keys = get_all_obj_keys(map_json_old)
+    old_object_keys = {}#get_all_obj_keys(map_json_old)
 
     set_old_hashes = set(old_object_keys.keys())
     set_new_hashes = set(new_object_keys.keys())

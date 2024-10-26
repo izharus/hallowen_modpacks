@@ -41,6 +41,10 @@ All modpacks store in the "modpacks" directory. Every modpack stores in its own 
 - **modpack_name/main_data/**
   - Essential data files for both server and client.
 
+- **modpack_name/client_additional_data/launcher_data/**
+  - A directory for storing some additional data for launcher:
+    - server_icon.jpg
+
 - **modpack_name/client_additional_data/custom_name**
   - Additional files that can be added to the client data if needed. It could be multiple "custom_name" dirs.
 
@@ -68,7 +72,9 @@ This file represents a json dictionary (server_config):
   "forge_version": "1.18.2-40.2.9", // The Forge version.
   "minecraft_profile": "1.18.2-forge-40.2.9", // The name of the Minecraft profile.
   "minecraft_server_ip": "123.123.123.123", // The IP address of the Minecraft server.
-  "minecraft_server_port": "5610" //The port of the Minecraft server.
+  "minecraft_server_port": "5610", //The port of the Minecraft server.
+  "description": "Server description", // A minecraft server description for launcher
+  "server_icon": file_info, // A server icon for launcher
 }
 ```
 
