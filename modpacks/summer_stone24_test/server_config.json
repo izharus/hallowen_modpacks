@@ -4,6 +4,7 @@
     "forge_version": "1.12.2-14.23.5.2860",
     "minecraft_profile": "1.12.2-forge-14.23.5.2860",
     "minecraft_server_ip": "77.239.232.50",
-    "minecraft_server_port": "25570"
+    "minecraft_server_port": "25570",
+    "description": "Тестовый сервер на SpongeForge."
   }
   
